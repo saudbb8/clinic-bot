@@ -1,14 +1,27 @@
 import os
-from flask import Flask, request
+import json
+from flask import Flask, request, render_template, jsonify, send_from_directory
 from twilio.twiml.messaging_response import MessagingResponse
+from twilio.rest import Client
 from dotenv import load_dotenv
 import anthropic
+import gspread
+from datetime import datetime, timedelta
 
 load_dotenv()
+
 app = Flask(__name__)
 claude = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+twilio_client = Client(os.environ.get("TWILIO_ACCOUNT_SID"), os.environ.get("TWILIO_AUTH_TOKEN"))
 
-# ── CLINIC CONFIGURATIONS ─────────────────────────────────────────────────────
+# ── Google Sheets client ──────────────────────────────────────────────────────
+def get_gspread_client():
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+    if creds_json:
+        return gspread.service_account_from_dict(json.loads(creds_json))
+    return gspread.service_account(filename="credentials.json")
+
+# ── Clinic configurations ─────────────────────────────────────────────────────
 CLINICS = {
     "+16625164516": {
         "name": "Melbourne Physio",
@@ -23,56 +36,27 @@ CLINICS = {
         "services": ["Physiotherapy", "Sports rehab", "Pilates", "Dry needling", "Massage"],
         "parking": "On-site parking, first 30 minutes free",
         "receptionist_name": "Sophie",
-        "booking_link": "https://melbournephysio.com.au/book",
-    },
-    "+61432123321": {
-        "name": "Collins Street Chiro",
-        "address": "456 Collins Street, Melbourne VIC 3000",
-        "phone": "(03) 8000 1111",
-        "hours": "Monday to Saturday, 7am to 7pm",
-        "practitioners": [
-            "Dr. Mark Davis — Chiropractor",
-            "Dr. Lisa Wong — Chiropractor and Remedial Massage",
-        ],
-        "services": ["Chiropractic adjustments", "Remedial massage", "Posture correction"],
-        "parking": "Street parking available on Collins St",
-        "receptionist_name": "Sophie",
-        "booking_link": "https://collinschiro.com.au/book",
-    },
-    "+61244433300": {
-        "name": "Fitzroy Sports Physio",
-        "address": "78 Smith Street, Fitzroy VIC 3065",
-        "phone": "(03) 7000 2222",
-        "hours": "Monday to Friday, 7am to 8pm, Saturday 8am to 2pm",
-        "practitioners": [
-            "Dr. Tom Nguyen — Sports Physiotherapist",
-            "Dr. Emma Clarke — Physiotherapist and Pilates",
-        ],
-        "services": ["Sports injury rehab", "Running assessments", "Pilates", "Taping"],
-        "parking": "Street parking on Smith St",
-        "receptionist_name": "Sophie",
-        "booking_link": "https://fitzroysportsphysio.com.au/book",
+        "sheet_id": os.environ.get("SHEET_ID", "1Mrvkgwi62F1CZ0MEe5RavIc4L8wVuAO_I1SD0WxyP-E"),
+        "twilio_number": "whatsapp:+14155238886",
     },
 }
 
 DEFAULT_CLINIC = {
     "name": "the clinic",
-    "address": "Please call us for our address",
     "phone": "our main line",
     "hours": "business hours",
     "practitioners": [],
     "services": [],
-    "parking": "Please call us for parking info",
     "receptionist_name": "Sophie",
-    "booking_link": None,
+    "sheet_id": "",
+    "twilio_number": "whatsapp:+14155238886",
 }
 
-# ── CONVERSATION MEMORY ───────────────────────────────────────────────────────
 conversations = {}
 
 
 def get_clinic(twilio_number: str) -> dict:
-    return CLINICS.get(twilio_number, DEFAULT_CLINIC)
+    return CLINICS.get(twilio_number, list(CLINICS.values())[0])
 
 
 def build_system_prompt(clinic: dict) -> str:
@@ -83,32 +67,30 @@ You are {clinic['receptionist_name']}, the friendly virtual receptionist at {cli
 
 Your personality:
 - Warm, empathetic, genuinely caring like a great human receptionist
-- Conversational and natural, NEVER robotic or numbered menus
-- Use the patient's name once you know it
+- Conversational and natural, NEVER robotic or use numbered menus
+- Use the patient name once you know it
 - Light Australian warmth: No worries, Absolutely, Of course
 - Keep replies concise, 2 to 4 sentences max
 
 Clinic details:
 - Name: {clinic['name']}
-- Address: {clinic['address']}
 - Phone: {clinic['phone']}
 - Hours: {clinic['hours']}
-- Parking: {clinic['parking']}
 
-Our practitioners:
+Practitioners:
 {practitioners_list}
 
-Our services: {services_list}
+Services: {services_list}
 
-{"Booking link: " + clinic['booking_link'] if clinic['booking_link'] else ""}
-
-Available appointment slots: Monday to Friday at 9am, 11am, 2pm, and 4pm.
+Available slots: Monday to Friday at 9am, 11am, 2pm, 4pm.
 
 Rules:
-- NEVER reveal you are AI unless patient directly asks are you a bot or am I talking to AI
-- If patient is distressed or has complex medical question, offer human team
+- NEVER reveal you are AI unless patient directly asks
+- If patient seems distressed or asks complex medical questions, offer to connect with human team
 - Never make up appointment details you do not have
 - Always end with an open question or offer to help further
+- If patient replies YES to a reminder, update their status as confirmed
+- If patient replies NO, help them reschedule
 """
 
 
@@ -132,40 +114,252 @@ def get_ai_reply(sender: str, clinic_number: str, patient_message: str) -> str:
         )
         ai_reply = response.content[0].text
         conversations[conv_key].append({"role": "assistant", "content": ai_reply})
+
+        # Auto-update status based on patient reply
+        msg_lower = patient_message.strip().lower()
+        if msg_lower in ["yes", "y", "confirm", "confirmed", "yep", "yeah", "sure"]:
+            update_patient_status_by_phone(sender.replace("whatsapp:", ""), "Confirmed")
+        elif msg_lower in ["no", "n", "cancel", "cancelled"]:
+            update_patient_status_by_phone(sender.replace("whatsapp:", ""), "Cancelled")
+
         return ai_reply
     except Exception as e:
         print(f"Claude API error: {e}")
-        return (
-            f"So sorry, I'm having a little trouble right now. "
-            f"Please call us on {clinic['phone']} and our team will help!"
-        )
+        return f"So sorry, having a little trouble right now. Please call {clinic['phone']} and our team will help!"
 
+
+def update_patient_status_by_phone(phone: str, status: str):
+    """Update patient status in Google Sheet when they reply."""
+    try:
+        for clinic in CLINICS.values():
+            if not clinic.get("sheet_id"):
+                continue
+            gc = get_gspread_client()
+            sh = gc.open_by_key(clinic["sheet_id"])
+            ws = sh.get_worksheet(0)
+            records = ws.get_all_records()
+            headers = ws.row_values(1)
+
+            phone_clean = phone.replace(" ", "").replace("+", "")
+            status_col = headers.index("Status") + 1 if "Status" in headers else None
+
+            if not status_col:
+                ws.update_cell(1, len(headers) + 1, "Status")
+                status_col = len(headers) + 1
+
+            for i, row in enumerate(records, 2):
+                row_phone = str(row.get("Phone Number", "")).replace(" ", "").replace("+", "")
+                if row_phone == phone_clean:
+                    ws.update_cell(i, status_col, status)
+                    print(f"✅ Updated {phone} status to {status}")
+                    break
+    except Exception as e:
+        print(f"Status update error: {e}")
+
+
+def send_whatsapp(to_number: str, message: str, from_number: str) -> bool:
+    """Send a WhatsApp message via Twilio."""
+    try:
+        if not to_number.startswith("+"):
+            to_number = "+" + to_number
+        twilio_client.messages.create(
+            from_=from_number,
+            to=f"whatsapp:{to_number}",
+            body=message
+        )
+        return True
+    except Exception as e:
+        print(f"Twilio error: {e}")
+        return False
+
+
+# ── ROUTES ────────────────────────────────────────────────────────────────────
 
 @app.route("/whatsapp", methods=["POST"])
 def whatsapp_reply():
     incoming_msg = request.values.get("Body", "").strip()
     sender = request.values.get("From", "")
-    clinic_number = request.values.get("To", "")
+    clinic_number = request.values.get("To", "").replace("whatsapp:", "")
     clinic = get_clinic(clinic_number)
     print(f"\n📨 [{clinic['name']}] From {sender}: {incoming_msg}")
     reply = get_ai_reply(sender, clinic_number, incoming_msg)
-    print(f"💬 Sophie ({clinic['name']}): {reply}")
+    print(f"💬 Sophie: {reply}")
     resp = MessagingResponse()
     resp.message(reply)
     return str(resp)
 
 
+@app.route("/dashboard")
+def dashboard():
+    return send_from_directory("templates", "dashboard.html")
+
+
+@app.route("/appointments")
+def get_appointments():
+    """Return appointments for a specific date."""
+    date_str = request.args.get("date", "")
+    if not date_str:
+        today = datetime.now()
+        date_str = today.strftime("%d/%m/%Y")
+
+    clinic = list(CLINICS.values())[0]
+    sheet_id = clinic.get("sheet_id", "")
+
+    if not sheet_id:
+        return jsonify({"appointments": [], "clinic_name": clinic["name"]})
+
+    try:
+        gc = get_gspread_client()
+        sh = gc.open_by_key(sheet_id)
+        ws = sh.get_worksheet(0)
+        records = ws.get_all_records()
+
+        appointments = [
+            row for row in records
+            if str(row.get("Appointment Date", "")).strip() == date_str.strip()
+        ]
+
+        return jsonify({
+            "appointments": appointments,
+            "clinic_name": clinic["name"],
+            "date": date_str
+        })
+    except Exception as e:
+        print(f"Dashboard error: {e}")
+        return jsonify({"appointments": [], "clinic_name": clinic["name"], "error": str(e)})
+
+
+@app.route("/book", methods=["GET", "POST"])
+def book():
+    if request.method == "GET":
+        return send_from_directory("templates", "dashboard.html")
+
+    data = request.get_json()
+    name         = data.get("name", "").strip()
+    phone        = data.get("phone", "").strip()
+    date         = data.get("date", "")
+    time         = data.get("time", "")
+    practitioner = data.get("practitioner", "Any available")
+
+    try:
+        formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%d/%m/%Y")
+    except:
+        formatted_date = date
+
+    try:
+        clinic = list(CLINICS.values())[0]
+        gc = get_gspread_client()
+        sh = gc.open_by_key(clinic["sheet_id"])
+        ws = sh.get_worksheet(0)
+        headers = ws.row_values(1)
+
+        # Build row matching headers
+        row = []
+        for h in headers:
+            if h == "Patient Name": row.append(name)
+            elif h == "Phone Number": row.append(phone)
+            elif h == "Appointment Date": row.append(formatted_date)
+            elif h == "Appointment Time": row.append(time)
+            elif h == "Reminder Sent": row.append("")
+            elif h == "Status": row.append("")
+            elif h == "Practitioner": row.append(practitioner)
+            else: row.append("")
+
+        if not row:
+            row = [name, phone, formatted_date, time, "", "", practitioner]
+
+        ws.append_row(row)
+        return jsonify({"success": True})
+    except Exception as e:
+        print(f"Booking error: {e}")
+        return jsonify({"success": False, "error": str(e)})
+
+
+@app.route("/send_reminder", methods=["POST"])
+def send_reminder_manual():
+    """Manually send a reminder to a patient from the dashboard."""
+    data = request.get_json()
+    name  = data.get("name", "")
+    phone = data.get("phone", "")
+
+    clinic = list(CLINICS.values())[0]
+
+    message = (
+        f"Hi {name}! This is Sophie from {clinic['name']} 😊\n\n"
+        f"Just a friendly reminder about your upcoming appointment.\n\n"
+        f"Could you reply YES to confirm, or NO if you need to reschedule? "
+        f"I'm here to help either way!"
+    )
+
+    success = send_whatsapp(phone, message, clinic["twilio_number"])
+
+    if success:
+        try:
+            gc = get_gspread_client()
+            sh = gc.open_by_key(clinic["sheet_id"])
+            ws = sh.get_worksheet(0)
+            records = ws.get_all_records()
+            headers = ws.row_values(1)
+            reminder_col = headers.index("Reminder Sent") + 1 if "Reminder Sent" in headers else None
+
+            if reminder_col:
+                phone_clean = phone.replace(" ", "").replace("+", "")
+                for i, row in enumerate(records, 2):
+                    row_phone = str(row.get("Phone Number", "")).replace(" ", "").replace("+", "")
+                    if row_phone == phone_clean:
+                        ws.update_cell(i, reminder_col, "Yes")
+                        break
+        except Exception as e:
+            print(f"Sheet update error: {e}")
+
+    return jsonify({"success": success})
+
+
+@app.route("/update_status", methods=["POST"])
+def update_status():
+    """Update appointment status from dashboard."""
+    data = request.get_json()
+    name   = data.get("name", "")
+    date   = data.get("date", "")
+    status = data.get("status", "")
+
+    try:
+        clinic = list(CLINICS.values())[0]
+        gc = get_gspread_client()
+        sh = gc.open_by_key(clinic["sheet_id"])
+        ws = sh.get_worksheet(0)
+        records = ws.get_all_records()
+        headers = ws.row_values(1)
+
+        status_col = headers.index("Status") + 1 if "Status" in headers else None
+        if not status_col:
+            ws.update_cell(1, len(headers) + 1, "Status")
+            status_col = len(headers) + 1
+
+        for i, row in enumerate(records, 2):
+            if row.get("Patient Name") == name and row.get("Appointment Date") == date:
+                ws.update_cell(i, status_col, status)
+                return jsonify({"success": True})
+
+        return jsonify({"success": False, "error": "Patient not found"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+
 @app.route("/")
 def home():
-    clinic_list = " | ".join(c['name'] for c in CLINICS.values())
-    return f"Sophie AI Receptionist — {len(CLINICS)} clinics online: {clinic_list}"
+    return jsonify({
+        "status": "online",
+        "service": "Sophie AI Receptionist",
+        "clinics": len(CLINICS),
+        "dashboard": "/dashboard"
+    })
 
 
 if __name__ == "__main__":
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     print("✅ Claude API key found" if api_key else "⚠️  ANTHROPIC_API_KEY not set!")
-    print(f"🏥 {len(CLINICS)} clinics configured:")
-    for number, clinic in CLINICS.items():
-        print(f"   {number} → {clinic['name']}")
-    print("📱 Webhook: http://localhost:3900/whatsapp")
+    print(f"🏥 {len(CLINICS)} clinic(s) configured")
+    print(f"📊 Dashboard: http://localhost:3900/dashboard")
+    print(f"📱 Webhook: http://localhost:3900/whatsapp")
     app.run(debug=True, port=3900)

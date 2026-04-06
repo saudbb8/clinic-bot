@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sophie Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#f8faff;min-height:100vh;padding:20px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:#0f6e56;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:16px;height:16px;fill:white}
+.logo-name{font-size:15px;font-weight:600;color:#0a2540}
+.logo-sub{font-size:11px;color:#64748b}
+.badge-online{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px}
+.badge-online::before{content:'';width:6px;height:6px;background:#16a34a;border-radius:50%;display:inline-block}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:white;border:0.5px solid #e2e8f0;border-radius:10px;padding:14px 16px}
+.stat-label{font-size:11px;color:#64748b;margin-bottom:4px}
+.stat-val{font-size:24px;font-weight:600;color:#0a2540}
+.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
+.stat.green .stat-val{color:#0f6e56}
+.stat.amber .stat-val{color:#854f0b}
+.stat.red .stat-val{color:#991b1b}
+.card{background:white;border:0.5px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:0.5px solid #f1f5f9;flex-wrap:wrap;gap:10px}
+.card-title{font-size:14px;font-weight:600;color:#0a2540}
+.card-subtitle{font-size:12px;color:#64748b;margin-top:2px}
+.add-btn{background:#0f6e56;color:white;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer}
+.add-btn:hover{background:#085041}
+.add-form{display:none;padding:16px 18px;background:#f8faff;border-bottom:0.5px solid #e2e8f0}
+.form-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end}
+@media(max-width:700px){.form-row{grid-template-columns:1fr 1fr}}
+.fi label{font-size:11px;color:#64748b;margin-bottom:4px;display:block}
+.fi input,.fi select{width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;color:#0a2540;outline:none;background:white}
+.fi input:focus,.fi select:focus{border-color:#0f6e56}
+.filters{display:flex;gap:8px;padding:12px 18px;border-bottom:0.5px solid #f1f5f9;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.filter-group{display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn{background:none;border:1px solid #e2e8f0;border-radius:20px;padding:4px 12px;font-size:11px;color:#64748b;cursor:pointer}
+.filter-btn.active{background:#0f6e56;color:white;border-color:#0f6e56}
+.date-nav{display:flex;align-items:center;gap:8px;font-size:12px;color:#0a2540;font-weight:500}
+.nav-btn{background:none;border:1px solid #e2e8f0;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:12px;color:#64748b}
+.nav-btn:hover{background:#f1f5f9}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f8faff;color:#64748b;font-weight:500;text-align:left;padding:10px 18px;border-bottom:0.5px solid #e2e8f0;white-space:nowrap}
+td{padding:12px 18px;border-bottom:0.5px solid #f1f5f9;color:#0a2540;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbff}
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.s-confirmed{background:#f0fdf4;color:#166534}
+.s-pending{background:#fefce8;color:#854f0b}
+.s-cancelled{background:#fef2f2;color:#991b1b}
+.r-24hr{background:#eff6ff;color:#1e40af}
+.r-1hr{background:#fefce8;color:#854f0b}
+.r-done{background:#f0fdf4;color:#166534}
+.r-none{background:#f8faff;color:#94a3b8}
+.avatar{width:28px;height:28px;border-radius:50%;background:#e1f5ee;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#0f6e56;flex-shrink:0}
+.patient-cell{display:flex;align-items:center;gap:8px}
+.action-btn{background:none;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:11px;color:#64748b;cursor:pointer;margin-right:4px}
+.action-btn:hover{background:#f1f5f9}
+.send-btn{background:#0f6e56;border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:white;cursor:pointer}
+.send-btn:hover{background:#085041}
+.send-btn:disabled{background:#9fe1cb;cursor:not-allowed}
+.empty{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
+.loading{text-align:center;padding:40px;color:#64748b;font-size:13px}
+.toast{display:none;position:fixed;bottom:20px;right:20px;background:#0f6e56;color:white;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999}
+.refresh-btn{background:none;border:1px solid #e2e8f0;border-radius:7px;padding:6px 12px;font-size:12px;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:4px}
+.refresh-btn:hover{background:#f1f5f9}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    </div>
+    <div>
+      <div class="logo-name" id="clinic-name">Melbourne Physio</div>
+      <div class="logo-sub">Appointments dashboard</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="refresh-btn" onclick="loadAppointments()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="#64748b"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      Refresh
+    </button>
+    <div class="badge-online">Sophie is online</div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">Today's appointments</div>
+    <div class="stat-val" id="stat-total">—</div>
+    <div class="stat-sub" id="stat-date">Loading...</div>
+  </div>
+  <div class="stat green">
+    <div class="stat-label">Confirmed</div>
+    <div class="stat-val" id="stat-confirmed">—</div>
+    <div class="stat-sub">Handled by Sophie</div>
+  </div>
+  <div class="stat amber">
+    <div class="stat-label">Awaiting reply</div>
+    <div class="stat-val" id="stat-pending">—</div>
+    <div class="stat-sub">Reminder sent</div>
+  </div>
+  <div class="stat red">
+    <div class="stat-label">Cancelled</div>
+    <div class="stat-val" id="stat-cancelled">—</div>
+    <div class="stat-sub">Today</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <div class="card-title">Patient appointments</div>
+      <div class="card-subtitle">Sophie sends reminders 24hrs and 1hr before each appointment automatically</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="add-btn" onclick="toggleForm()">+ Add patient</button>
+    </div>
+  </div>
+
+  <div class="add-form" id="add-form">
+    <div class="form-row">
+      <div class="fi"><label>Patient name *</label><input type="text" id="new-name" placeholder="James Smith"></div>
+      <div class="fi"><label>WhatsApp number *</label><input type="tel" id="new-phone" placeholder="+61 4xx xxx xxx"></div>
+      <div class="fi"><label>Date *</label><input type="date" id="new-date"></div>
+      <div class="fi"><label>Time *</label>
+        <select id="new-time">
+          <option value="">Select time</option>
+          <option>9:00 AM</option>
+          <option>11:00 AM</option>
+          <option>2:00 PM</option>
+          <option>4:00 PM</option>
+        </select>
+      </div>
+      <div class="fi"><label>Practitioner</label>
+        <select id="new-prac">
+          <option>Dr. James Chen</option>
+          <option>Dr. Sarah Mills</option>
+          <option>Dr. Anika Patel</option>
+          <option>Any available</option>
+        </select>
+      </div>
+      <div class="fi"><label>&nbsp;</label>
+        <button class="add-btn" onclick="addPatient()">Save</button>
+      </div>
+    </div>
+    <div id="form-error" style="color:#dc2626;font-size:11px;margin-top:8px;display:none"></div>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
+      <button class="filter-btn" onclick="filterTable('confirmed',this)">Confirmed</button>
+      <button class="filter-btn" onclick="filterTable('pending',this)">Pending</button>
+      <button class="filter-btn" onclick="filterTable('cancelled',this)">Cancelled</button>
+    </div>
+    <div class="date-nav">
+      <button class="nav-btn" onclick="changeDate(-1)">&#8249;</button>
+      <span id="date-display">Today</span>
+      <button class="nav-btn" onclick="changeDate(1)">&#8250;</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <div id="table-loading" class="loading">Loading appointments...</div>
+    <table id="appt-table" style="display:none">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Time</th>
+          <th>Practitioner</th>
+          <th>Status</th>
+          <th>Reminder</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <div id="table-empty" class="empty" style="display:none">No appointments found for this date.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allAppointments = [];
+let currentFilter = 'all';
+let currentDate = new Date();
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-AU', {day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'/');
+}
+
+function formatDateDisplay(d) {
+  const today = new Date();
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+  return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+}
+
+function changeDate(dir) {
+  currentDate.setDate(currentDate.getDate() + dir);
+  document.getElementById('date-display').textContent = formatDateDisplay(currentDate);
+  loadAppointments();
+}
+
+function getInitials(name) {
+  return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+}
+
+function getReminderBadge(reminder) {
+  if (!reminder || reminder === '') return '<span class="status-pill r-none">Not sent</span>';
+  if (reminder.toLowerCase() === 'yes') return '<span class="status-pill r-done">✓ Sent</span>';
+  return '<span class="status-pill r-none">Pending</span>';
+}
+
+function getStatusBadge(status) {
+  if (!status || status === '') return '<span class="status-pill s-pending">⏳ Awaiting</span>';
+  const s = status.toLowerCase();
+  if (s === 'confirmed' || s === 'yes') return '<span class="status-pill s-confirmed">✓ Confirmed</span>';
+  if (s === 'cancelled' || s === 'no') return '<span class="status-pill s-cancelled">✕ Cancelled</span>';
+  return '<span class="status-pill s-pending">⏳ Awaiting</span>';
+}
+
+async function loadAppointments() {
+  document.getElementById('table-loading').style.display = 'block';
+  document.getElementById('appt-table').style.display = 'none';
+  document.getElementById('table-empty').style.display = 'none';
+
+  try {
+    const dateStr = formatDate(currentDate);
+    const res = await fetch(`/appointments?date=${encodeURIComponent(dateStr)}`);
+    const data = await res.json();
+
+    if (data.clinic_name) {
+      document.getElementById('clinic-name').textContent = data.clinic_name;
+    }
+
+    allAppointments = data.appointments || [];
+    renderTable(allAppointments);
+    updateStats(allAppointments);
+    document.getElementById('stat-date').textContent = formatDateDisplay(currentDate);
+
+  } catch(e) {
+    document.getElementById('table-loading').textContent = 'Error loading data. Check your connection.';
+  }
+}
+
+function updateStats(appts) {
+  document.getElementById('stat-total').textContent = appts.length;
+  document.getElementById('stat-confirmed').textContent = appts.filter(a => {
+    const s = (a['Status'] || '').toLowerCase();
+    return s === 'confirmed' || s === 'yes';
+  }).length;
+  document.getElementById('stat-pending').textContent = appts.filter(a => {
+    const s = (a['Status'] || '').toLowerCase();
+    return !s || s === 'awaiting' || s === 'pending';
+  }).length;
+  document.getElementById('stat-cancelled').textContent = appts.filter(a => {
+    const s = (a['Status'] || '').toLowerCase();
+    return s === 'cancelled' || s === 'no';
+  }).length;
+}
+
+function renderTable(appts) {
+  document.getElementById('table-loading').style.display = 'none';
+
+  const filtered = currentFilter === 'all' ? appts : appts.filter(a => {
+    const s = (a['Status'] || '').toLowerCase();
+    if (currentFilter === 'confirmed') return s === 'confirmed' || s === 'yes';
+    if (currentFilter === 'pending') return !s || s === 'awaiting' || s === 'pending';
+    if (currentFilter === 'cancelled') return s === 'cancelled' || s === 'no';
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    document.getElementById('table-empty').style.display = 'block';
+    document.getElementById('appt-table').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('appt-table').style.display = 'table';
+  document.getElementById('table-empty').style.display = 'none';
+
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = filtered.map((a, i) => {
+    const name = a['Patient Name'] || 'Unknown';
+    const phone = a['Phone Number'] || '';
+    const time = a['Appointment Time'] || '';
+    const prac = a['Practitioner'] || '—';
+    const status = a['Status'] || '';
+    const reminder = a['Reminder Sent'] || '';
+    const initials = getInitials(name);
+
+    return `<tr>
+      <td><div class="patient-cell">
+        <div class="avatar">${initials}</div>
+        <div><div style="font-weight:500">${name}</div>
+        <div style="font-size:10px;color:#94a3b8">${phone}</div></div>
+      </div></td>
+      <td>${time}</td>
+      <td>${prac}</td>
+      <td>${getStatusBadge(status)}</td>
+      <td>${getReminderBadge(reminder)}</td>
+      <td>
+        <button class="send-btn" onclick="sendReminder(${i},'${name}','${phone}',this)">Send reminder</button>
+        <button class="action-btn" onclick="markConfirmed(${i})">Confirm</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable(allAppointments);
+}
+
+async function sendReminder(idx, name, phone, btn) {
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  try {
+    const res = await fetch('/send_reminder', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, phone, manual: true})
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Reminder sent to ' + name);
+      btn.textContent = '✓ Sent';
+      setTimeout(() => loadAppointments(), 1500);
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Send reminder';
+      showToast('Failed: ' + (data.error || 'Unknown error'));
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Send reminder';
+  }
+}
+
+async function markConfirmed(idx) {
+  const appt = allAppointments[idx];
+  if (!appt) return;
+  try {
+    await fetch('/update_status', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name: appt['Patient Name'], date: appt['Appointment Date'], status: 'Confirmed'})
+    });
+    showToast(appt['Patient Name'] + ' marked as confirmed');
+    setTimeout(() => loadAppointments(), 800);
+  } catch(e) {}
+}
+
+function toggleForm() {
+  const f = document.getElementById('add-form');
+  f.style.display = f.style.display === 'block' ? 'none' : 'block';
+  if (f.style.display === 'block') {
+    document.getElementById('new-date').value = currentDate.toISOString().split('T')[0];
+  }
+}
+
+async function addPatient() {
+  const name  = document.getElementById('new-name').value.trim();
+  const phone = document.getElementById('new-phone').value.trim();
+  const date  = document.getElementById('new-date').value;
+  const time  = document.getElementById('new-time').value;
+  const prac  = document.getElementById('new-prac').value;
+  const err   = document.getElementById('form-error');
+
+  if (!name || !phone || !date || !time) {
+    err.style.display = 'block';
+    err.textContent = 'Please fill in all required fields.';
+    return;
+  }
+  err.style.display = 'none';
+
+  try {
+    const res = await fetch('/book', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, phone, date, time, practitioner: prac})
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Patient added successfully');
+      document.getElementById('new-name').value = '';
+      document.getElementById('new-phone').value = '';
+      document.getElementById('new-time').value = '';
+      toggleForm();
+      setTimeout(() => loadAppointments(), 800);
+    } else {
+      err.style.display = 'block';
+      err.textContent = data.error || 'Failed to save. Try again.';
+    }
+  } catch(e) {
+    err.style.display = 'block';
+    err.textContent = 'Connection error. Try again.';
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+document.getElementById('new-date').min = new Date().toISOString().split('T')[0];
+document.getElementById('date-display').textContent = 'Today';
+loadAppointments();
+setInterval(loadAppointments, 60000);
+</script>
+</body>
+</html>

@@ -9,157 +9,190 @@ import time
 
 load_dotenv()
 
-# ── Twilio credentials ────────────────────────────────────────────────────────
 TWILIO_SID   = os.environ.get("TWILIO_ACCOUNT_SID")
 TWILIO_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
 twilio_client = Client(TWILIO_SID, TWILIO_TOKEN)
 
-# ── Google credentials from environment (no credentials.json file needed) ─────
-def get_gspread_client():
-    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
-    if creds_json:
-        creds_dict = json.loads(creds_json)
-        return gspread.service_account_from_dict(creds_dict)
-    else:
-        return gspread.service_account(filename="credentials.json")
-
-# ── Clinic configurations ─────────────────────────────────────────────────────
 CLINICS = {
     "Melbourne Physio": {
         "twilio_number": "whatsapp:+14155238886",
-        "sheet_id": "1Mrvkgwi62F1CZ0MEe5RavIc4L8wVuAO_I1SD0WxyP-E",
-    },
-    "Collins Street Chiro": {
-        "twilio_number": "whatsapp:+14155238886",
-        "sheet_id": "",
+        "sheet_id": os.environ.get("SHEET_ID", "1Mrvkgwi62F1CZ0MEe5RavIc4L8wVuAO_I1SD0WxyP-E"),
+        "phone": "(03) 9000 0000",
     },
 }
 
+TIME_SLOTS = {
+    "9:00 AM":  9,
+    "11:00 AM": 11,
+    "2:00 PM":  14,
+    "4:00 PM":  16,
+}
 
-def get_tomorrows_appointments(sheet_id: str) -> list:
-    """Read tomorrow's appointments from Google Sheet."""
+
+def get_gspread_client():
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+    if creds_json:
+        return gspread.service_account_from_dict(json.loads(creds_json))
+    return gspread.service_account(filename="credentials.json")
+
+
+def get_appointments(sheet_id: str, target_date: str) -> list:
     if not sheet_id:
         return []
     try:
         gc = get_gspread_client()
         sh = gc.open_by_key(sheet_id)
-        worksheet = sh.get_worksheet(0)
-        all_rows = worksheet.get_all_records()
-
-        tomorrow = (datetime.now() + timedelta(days=1)).strftime("%d/%m/%Y")
-
-        appointments = [
-            row for row in all_rows
-            if str(row.get("Appointment Date", "")).strip() == tomorrow
-            and str(row.get("Reminder Sent", "")).strip().lower() != "yes"
+        ws = sh.get_worksheet(0)
+        records = ws.get_all_records()
+        return [
+            {"row": i + 2, **row}
+            for i, row in enumerate(records)
+            if str(row.get("Appointment Date", "")).strip() == target_date
+            and str(row.get("Status", "")).lower() not in ["cancelled", "no"]
         ]
-
-        return appointments
-
     except Exception as e:
         print(f"Sheet error: {e}")
         return []
 
 
-def send_reminder(patient: dict, clinic_name: str, twilio_number: str, sheet_id: str):
-    """Send a WhatsApp reminder to one patient."""
-    name       = patient.get("Patient Name", "there")
-    phone      = str(patient.get("Phone Number", "")).strip()
-    date       = patient.get("Appointment Date", "tomorrow")
-    time_slot  = patient.get("Appointment Time", "your scheduled time")
-    row_number = patient.get("Row Number")
-
-    if not phone:
-        print(f"❌ No phone number for {name} — skipping")
-        return
-
+def send_whatsapp(phone: str, message: str, from_number: str) -> bool:
     if not phone.startswith("+"):
         phone = "+" + phone
-
-    message = (
-        f"Hi {name}! This is Sophie from {clinic_name} 😊\n\n"
-        f"Just a friendly reminder that you have an appointment "
-        f"tomorrow ({date}) at {time_slot}.\n\n"
-        f"Could you reply YES to confirm, or NO if you need to reschedule? "
-        f"I'm here to help either way!"
-    )
-
     try:
         twilio_client.messages.create(
-            from_=twilio_number,
+            from_=from_number,
             to=f"whatsapp:{phone}",
             body=message
         )
-        print(f"✅ Reminder sent to {name} ({phone})")
-
-        # Mark reminder as sent in Google Sheet
-        if row_number:
-            gc = get_gspread_client()
-            sh = gc.open_by_key(sheet_id)
-            worksheet = sh.get_worksheet(0)
-            headers = worksheet.row_values(1)
-            if "Reminder Sent" in headers:
-                col = headers.index("Reminder Sent") + 1
-                worksheet.update_cell(row_number, col, "Yes")
-
+        return True
     except Exception as e:
-        print(f"❌ Failed to send to {name}: {e}")
+        print(f"Send error: {e}")
+        return False
 
 
-def run_daily_reminders():
-    """Main job — runs every day at 2pm, sends reminders for tomorrow."""
-    print(f"\n🕐 Running daily reminders — {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+def mark_reminder_sent(sheet_id: str, row_num: int, reminder_type: str):
+    try:
+        gc = get_gspread_client()
+        sh = gc.open_by_key(sheet_id)
+        ws = sh.get_worksheet(0)
+        headers = ws.row_values(1)
+
+        col_name = f"Reminder {reminder_type}"
+        if col_name not in headers:
+            ws.update_cell(1, len(headers) + 1, col_name)
+            col = len(headers) + 1
+        else:
+            col = headers.index(col_name) + 1
+
+        ws.update_cell(row_num, col, "Sent")
+    except Exception as e:
+        print(f"Mark reminder error: {e}")
+
+
+def get_appointment_datetime(date_str: str, time_str: str) -> datetime:
+    try:
+        date = datetime.strptime(date_str, "%d/%m/%Y")
+        hour = TIME_SLOTS.get(time_str, 9)
+        return date.replace(hour=hour, minute=0, second=0)
+    except:
+        return None
+
+
+def check_and_send_reminders():
+    now = datetime.now()
+    today_str = now.strftime("%d/%m/%Y")
+    tomorrow_str = (now + timedelta(days=1)).strftime("%d/%m/%Y")
+
+    print(f"\n⏰ Checking reminders — {now.strftime('%d/%m/%Y %H:%M')}")
 
     for clinic_name, config in CLINICS.items():
-        print(f"\n🏥 Processing {clinic_name}...")
-
-        if not config["sheet_id"]:
-            print(f"   No sheet configured — skipping.")
+        sheet_id = config["sheet_id"]
+        if not sheet_id:
             continue
 
-        appointments = get_tomorrows_appointments(config["sheet_id"])
+        # Get today AND tomorrow appointments
+        appointments = (
+            get_appointments(sheet_id, today_str) +
+            get_appointments(sheet_id, tomorrow_str)
+        )
 
-        if not appointments:
-            print(f"   No appointments tomorrow or all reminders already sent.")
-            continue
+        for appt in appointments:
+            name      = appt.get("Patient Name", "there")
+            phone     = str(appt.get("Phone Number", "")).strip()
+            date_str  = appt.get("Appointment Date", "")
+            time_str  = appt.get("Appointment Time", "")
+            row_num   = appt.get("row")
 
-        print(f"   Found {len(appointments)} appointment(s) to remind:")
+            if not phone:
+                continue
 
-        for i, patient in enumerate(appointments, 1):
-            patient["Row Number"] = i + 1
-            send_reminder(
-                patient,
-                clinic_name,
-                config["twilio_number"],
-                config["sheet_id"]
-            )
+            appt_dt = get_appointment_datetime(date_str, time_str)
+            if not appt_dt:
+                continue
 
-    print(f"\n✅ Daily reminders complete.")
+            mins_until = (appt_dt - now).total_seconds() / 60
+
+            # ── 24 HOUR REMINDER ─────────────────────────────────────────────
+            sent_24hr = str(appt.get("Reminder 24hr", "")).lower() == "sent"
+            if not sent_24hr and 1380 <= mins_until <= 1500:
+                message = (
+                    f"Hi {name}! This is Sophie from {clinic_name} 😊\n\n"
+                    f"Just a friendly reminder that you have an appointment "
+                    f"tomorrow ({date_str}) at {time_str}.\n\n"
+                    f"Could you reply YES to confirm, or NO if you need to reschedule?"
+                )
+                if send_whatsapp(phone, message, config["twilio_number"]):
+                    mark_reminder_sent(sheet_id, row_num, "24hr")
+                    print(f"✅ 24hr reminder sent to {name}")
+
+            # ── 1 HOUR REMINDER ──────────────────────────────────────────────
+            sent_1hr = str(appt.get("Reminder 1hr", "")).lower() == "sent"
+            if not sent_1hr and 50 <= mins_until <= 70:
+                message = (
+                    f"Hi {name}! Sophie here from {clinic_name} 😊\n\n"
+                    f"Just a heads up — your appointment is in about 1 hour "
+                    f"at {time_str} today.\n\n"
+                    f"See you soon! Reply if you need anything."
+                )
+                if send_whatsapp(phone, message, config["twilio_number"]):
+                    mark_reminder_sent(sheet_id, row_num, "1hr")
+                    print(f"✅ 1hr reminder sent to {name}")
+
+            # ── 30 MIN REMINDER (if no reply to 24hr) ────────────────────────
+            sent_30min = str(appt.get("Reminder 30min", "")).lower() == "sent"
+            status = str(appt.get("Status", "")).lower()
+            if not sent_30min and sent_24hr and status not in ["confirmed", "yes"] and 25 <= mins_until <= 35:
+                message = (
+                    f"Hi {name}, Sophie from {clinic_name} again! 😊\n\n"
+                    f"Your appointment is in 30 minutes at {time_str}.\n\n"
+                    f"Quick reply YES to confirm you're on your way, "
+                    f"or call us on {config['phone']} if you need to reschedule."
+                )
+                if send_whatsapp(phone, message, config["twilio_number"]):
+                    mark_reminder_sent(sheet_id, row_num, "30min")
+                    print(f"✅ 30min reminder sent to {name}")
+
+    print("✅ Reminder check complete.")
 
 
-# ── Schedule to run every day at 2:00pm ──────────────────────────────────────
-schedule.every().day.at("14:00").do(run_daily_reminders)
+# Run every 30 minutes
+schedule.every(30).minutes.do(check_and_send_reminders)
 
 if __name__ == "__main__":
-    print("📅 Appointment reminder scheduler started")
-    print("⏰ Will send reminders daily at 2:00pm")
-    print("🏥 Clinics configured:", list(CLINICS.keys()))
+    print("📅 Smart reminder scheduler started")
+    print("⏰ Checks every 30 minutes")
+    print("📬 Sends: 24hr reminder → 1hr reminder → 30min follow-up")
+    print("🏥 Clinics:", list(CLINICS.keys()))
 
-    # Check credentials
     if os.environ.get("GOOGLE_CREDENTIALS"):
         print("✅ Google credentials loaded from environment")
     elif os.path.exists("credentials.json"):
-        print("✅ Google credentials loaded from credentials.json")
+        print("✅ Google credentials loaded from file")
     else:
         print("⚠️  No Google credentials found!")
 
-    if TWILIO_SID and TWILIO_TOKEN:
-        print("✅ Twilio credentials found")
-    else:
-        print("⚠️  Twilio credentials missing!")
-
     print("\nRunning first check now...\n")
-    run_daily_reminders()
+    check_and_send_reminders()
 
     while True:
         schedule.run_pending()
