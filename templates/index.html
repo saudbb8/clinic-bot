@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Melbourne Physio — Book Appointment</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8faff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.page{display:flex;gap:32px;align-items:flex-start;justify-content:center;flex-wrap:wrap;width:100%;max-width:680px}
+.left-panel{width:180px;padding-top:8px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.brand-icon{width:36px;height:36px;background:#0f6e56;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.brand-icon svg{width:20px;height:20px;fill:white}
+.brand-name{font-size:15px;font-weight:600;color:#0a2540;line-height:1.2}
+.trust-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
+.trust-dot{width:26px;height:26px;border-radius:7px;background:#e1f5ee;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.trust-dot svg{width:13px;height:13px;fill:#0f6e56}
+.trust-text{font-size:12px;color:#475569;line-height:1.5;padding-top:4px}
+.card{background:white;border-radius:16px;border:0.5px solid #e2e8f0;padding:28px 28px 24px;width:100%;max-width:400px}
+.steps{display:flex;align-items:center;gap:6px;margin-bottom:22px}
+.step{display:flex;align-items:center;gap:5px;font-size:11px;color:#94a3b8}
+.step.active{color:#0f6e56;font-weight:500}
+.step-num{width:18px;height:18px;border-radius:50%;background:#e2e8f0;font-size:10px;display:flex;align-items:center;justify-content:center;color:#64748b}
+.step.active .step-num{background:#0f6e56;color:white}
+.step-line{height:1px;width:16px;background:#e2e8f0;flex-shrink:0}
+.card-title{font-size:18px;font-weight:600;color:#0a2540;margin-bottom:4px}
+.card-sub{font-size:13px;color:#64748b;margin-bottom:18px}
+.whatsapp-note{display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-bottom:18px}
+.whatsapp-note svg{width:15px;height:15px;fill:#16a34a;flex-shrink:0}
+.whatsapp-note span{font-size:11px;color:#166534;line-height:1.4}
+.fg{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:5px}
+.input-wrap{position:relative}
+.input-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:13px;height:13px;fill:#94a3b8;pointer-events:none}
+input,select{width:100%;padding:9px 12px 9px 30px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#0a2540;outline:none;background:white;-webkit-appearance:none;appearance:none}
+input:focus,select:focus{border-color:#0f6e56;box-shadow:0 0 0 3px rgba(15,110,86,0.08)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.practitioners{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.prac-card{border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;cursor:pointer;transition:all 0.15s}
+.prac-card:hover{border-color:#5DCAA5}
+.prac-card.selected{border-color:#0f6e56;background:#f0fdf4}
+.prac-name{font-size:11px;font-weight:500;color:#0a2540}
+.prac-spec{font-size:10px;color:#64748b;margin-top:1px}
+.prac-card.selected .prac-name{color:#0f6e56}
+.btn{width:100%;padding:11px;background:#0f6e56;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px;transition:background 0.2s}
+.btn:hover{background:#085041}
+.btn:disabled{background:#9FE1CB;cursor:not-allowed}
+.footer-note{font-size:11px;color:#94a3b8;text-align:center;margin-top:14px;line-height:1.5}
+.error{display:none;background:#fef2f2;color:#dc2626;padding:10px 12px;border-radius:8px;font-size:12px;margin-top:10px}
+.success-section{display:none;text-align:center;padding:20px 0}
+.success-icon{font-size:44px;margin-bottom:16px}
+.success-title{font-size:18px;font-weight:600;color:#0a2540;margin-bottom:8px}
+.success-msg{font-size:13px;color:#475569;line-height:1.6}
+.success-whatsapp{font-size:12px;color:#0f6e56;margin-top:12px;font-weight:500}
+@media(max-width:520px){.left-panel{display:none}.page{padding:0}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="left-panel">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      </div>
+      <div class="brand-name">Melbourne<br>Physio</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-dot"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+      <div class="trust-text">Instant WhatsApp confirmation</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-dot"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+      <div class="trust-text">24hr reminder before your visit</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-dot"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+      <div class="trust-text">Easy reschedule anytime</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-dot"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+      <div class="trust-text">Mon–Fri 8am–6pm</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="steps">
+      <div class="step active"><div class="step-num">1</div>Details</div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-num">2</div>Time</div>
+      <div class="step-line"></div>
+      <div class="step"><div class="step-num">3</div>Done</div>
+    </div>
+
+    <div id="form-section">
+      <div class="card-title">Book your appointment</div>
+      <div class="card-sub">We'll send a reminder to your WhatsApp</div>
+
+      <div class="whatsapp-note">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.073.528 4.02 1.453 5.721L0 24l6.462-1.425A11.932 11.932 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.865 0-3.608-.5-5.112-1.372l-.362-.215-3.838.846.874-3.733-.235-.38A9.946 9.946 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        <span>Sophie will WhatsApp you a reminder 24 hours before your appointment</span>
+      </div>
+
+      <div class="row2">
+        <div class="fg">
+          <label>First name *</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+            <input type="text" id="firstname" placeholder="James">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Last name *</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+            <input type="text" id="lastname" placeholder="Smith">
+          </div>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>WhatsApp phone number *</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+          <input type="tel" id="phone" placeholder="+61 4xx xxx xxx">
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="fg">
+          <label>Date *</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+            <input type="date" id="date">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Time *</label>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+            <select id="time">
+              <option value="">Select time</option>
+              <option>9:00 AM</option>
+              <option>11:00 AM</option>
+              <option>2:00 PM</option>
+              <option>4:00 PM</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Choose your practitioner</label>
+        <div class="practitioners" id="practitioners">
+          <div class="prac-card selected" data-name="Dr. James Chen">
+            <div class="prac-name">Dr. James Chen</div>
+            <div class="prac-spec">Physiotherapy</div>
+          </div>
+          <div class="prac-card" data-name="Dr. Sarah Mills">
+            <div class="prac-name">Dr. Sarah Mills</div>
+            <div class="prac-spec">Sports Physio</div>
+          </div>
+          <div class="prac-card" data-name="Dr. Anika Patel">
+            <div class="prac-name">Dr. Anika Patel</div>
+            <div class="prac-spec">Clinical Pilates</div>
+          </div>
+          <div class="prac-card" data-name="Any available">
+            <div class="prac-name">Any available</div>
+            <div class="prac-spec">First available</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" id="submit-btn" onclick="submitForm()">Confirm Booking</button>
+      <div class="error" id="error"></div>
+    </div>
+
+    <div class="success-section" id="success-section">
+      <div class="success-icon">✅</div>
+      <div class="success-title">You're booked in!</div>
+      <div class="success-msg" id="success-msg"></div>
+      <div class="success-whatsapp">Sophie will WhatsApp you a reminder tomorrow.</div>
+    </div>
+
+    <div class="footer-note">Your details are private and secure &nbsp;·&nbsp; (03) 9000 0000</div>
+  </div>
+</div>
+
+<script>
+document.getElementById('date').min = new Date().toISOString().split('T')[0];
+let selectedPrac = 'Dr. James Chen';
+
+document.querySelectorAll('.prac-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.prac-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedPrac = card.dataset.name;
+  });
+});
+
+async function submitForm() {
+  const firstname = document.getElementById('firstname').value.trim();
+  const lastname  = document.getElementById('lastname').value.trim();
+  const phone     = document.getElementById('phone').value.trim();
+  const date      = document.getElementById('date').value;
+  const time      = document.getElementById('time').value;
+  const error     = document.getElementById('error');
+  const btn       = document.getElementById('submit-btn');
+
+  if (!firstname || !lastname || !phone || !date || !time) {
+    error.style.display = 'block';
+    error.textContent = 'Please fill in all required fields.';
+    return;
+  }
+  if (!phone.match(/^\+?[\d\s\-]{8,15}$/)) {
+    error.style.display = 'block';
+    error.textContent = 'Please enter a valid phone number with country code e.g. +61432997469';
+    return;
+  }
+
+  error.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Booking...';
+
+  try {
+    const res = await fetch('/book', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name: firstname + ' ' + lastname, phone, date, time, practitioner: selectedPrac})
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('form-section').style.display = 'none';
+      document.getElementById('success-section').style.display = 'block';
+      const d = new Date(date + 'T00:00:00').toLocaleDateString('en-AU', {weekday:'long',day:'numeric',month:'long'});
+      document.getElementById('success-msg').textContent =
+        firstname + ' is booked in for ' + d + ' at ' + time + ' with ' + selectedPrac + '.';
+    } else {
+      throw new Error(data.error);
+    }
+  } catch(e) {
+    error.style.display = 'block';
+    error.textContent = 'Something went wrong. Please call us on (03) 9000 0000';
+    btn.disabled = false;
+    btn.textContent = 'Confirm Booking';
+  }
+}
+</script>
+</body>
+</html>
