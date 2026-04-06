@@ -1,4 +1,5 @@
 import os
+import json
 import gspread
 from twilio.rest import Client
 from datetime import datetime, timedelta
@@ -12,6 +13,15 @@ load_dotenv()
 TWILIO_SID   = os.environ.get("TWILIO_ACCOUNT_SID")
 TWILIO_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
 twilio_client = Client(TWILIO_SID, TWILIO_TOKEN)
+
+# ── Google credentials from environment (no credentials.json file needed) ─────
+def get_gspread_client():
+    creds_json = os.environ.get("GOOGLE_CREDENTIALS")
+    if creds_json:
+        creds_dict = json.loads(creds_json)
+        return gspread.service_account_from_dict(creds_dict)
+    else:
+        return gspread.service_account(filename="credentials.json")
 
 # ── Clinic configurations ─────────────────────────────────────────────────────
 CLINICS = {
@@ -28,8 +38,10 @@ CLINICS = {
 
 def get_tomorrows_appointments(sheet_id: str) -> list:
     """Read tomorrow's appointments from Google Sheet."""
+    if not sheet_id:
+        return []
     try:
-        gc = gspread.service_account(filename="credentials.json")
+        gc = get_gspread_client()
         sh = gc.open_by_key(sheet_id)
         worksheet = sh.get_worksheet(0)
         all_rows = worksheet.get_all_records()
@@ -51,11 +63,15 @@ def get_tomorrows_appointments(sheet_id: str) -> list:
 
 def send_reminder(patient: dict, clinic_name: str, twilio_number: str, sheet_id: str):
     """Send a WhatsApp reminder to one patient."""
-    name  = patient.get("Patient Name", "there")
-    phone = str(patient.get("Phone Number", "")).strip()
-    date  = patient.get("Appointment Date", "tomorrow")
+    name       = patient.get("Patient Name", "there")
+    phone      = str(patient.get("Phone Number", "")).strip()
+    date       = patient.get("Appointment Date", "tomorrow")
     time_slot  = patient.get("Appointment Time", "your scheduled time")
     row_number = patient.get("Row Number")
+
+    if not phone:
+        print(f"❌ No phone number for {name} — skipping")
+        return
 
     if not phone.startswith("+"):
         phone = "+" + phone
@@ -78,10 +94,9 @@ def send_reminder(patient: dict, clinic_name: str, twilio_number: str, sheet_id:
 
         # Mark reminder as sent in Google Sheet
         if row_number:
-            gc = gspread.service_account(filename="credentials.json")
+            gc = get_gspread_client()
             sh = gc.open_by_key(sheet_id)
             worksheet = sh.get_worksheet(0)
-            # Find the Reminder Sent column and mark it
             headers = worksheet.row_values(1)
             if "Reminder Sent" in headers:
                 col = headers.index("Reminder Sent") + 1
@@ -97,6 +112,11 @@ def run_daily_reminders():
 
     for clinic_name, config in CLINICS.items():
         print(f"\n🏥 Processing {clinic_name}...")
+
+        if not config["sheet_id"]:
+            print(f"   No sheet configured — skipping.")
+            continue
+
         appointments = get_tomorrows_appointments(config["sheet_id"])
 
         if not appointments:
@@ -106,8 +126,7 @@ def run_daily_reminders():
         print(f"   Found {len(appointments)} appointment(s) to remind:")
 
         for i, patient in enumerate(appointments, 1):
-            # Add row number for marking reminder sent
-            patient["Row Number"] = i + 1  # +1 for header row
+            patient["Row Number"] = i + 1
             send_reminder(
                 patient,
                 clinic_name,
@@ -125,12 +144,23 @@ if __name__ == "__main__":
     print("📅 Appointment reminder scheduler started")
     print("⏰ Will send reminders daily at 2:00pm")
     print("🏥 Clinics configured:", list(CLINICS.keys()))
-    print("\nRunning first check now...\n")
 
-    # Run once immediately on startup for testing
+    # Check credentials
+    if os.environ.get("GOOGLE_CREDENTIALS"):
+        print("✅ Google credentials loaded from environment")
+    elif os.path.exists("credentials.json"):
+        print("✅ Google credentials loaded from credentials.json")
+    else:
+        print("⚠️  No Google credentials found!")
+
+    if TWILIO_SID and TWILIO_TOKEN:
+        print("✅ Twilio credentials found")
+    else:
+        print("⚠️  Twilio credentials missing!")
+
+    print("\nRunning first check now...\n")
     run_daily_reminders()
 
-    # Then keep running on schedule
     while True:
         schedule.run_pending()
         time.sleep(60)
