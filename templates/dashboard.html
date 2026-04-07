@@ -3,136 +3,231 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sophie Dashboard</title>
+<title>Sophie — Clinic Dashboard</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-body{background:#f8faff;min-height:100vh;padding:20px}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-icon{width:32px;height:32px;background:#0f6e56;border-radius:8px;display:flex;align-items:center;justify-content:center}
-.logo-icon svg{width:16px;height:16px;fill:white}
-.logo-name{font-size:15px;font-weight:600;color:#0a2540}
-.logo-sub{font-size:11px;color:#64748b}
-.badge-online{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px}
-.badge-online::before{content:'';width:6px;height:6px;background:#16a34a;border-radius:50%;display:inline-block}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
-.stat{background:white;border:0.5px solid #e2e8f0;border-radius:10px;padding:14px 16px}
-.stat-label{font-size:11px;color:#64748b;margin-bottom:4px}
-.stat-val{font-size:24px;font-weight:600;color:#0a2540}
-.stat-sub{font-size:11px;color:#94a3b8;margin-top:2px}
-.stat.green .stat-val{color:#0f6e56}
-.stat.amber .stat-val{color:#854f0b}
-.stat.red .stat-val{color:#991b1b}
-.card{background:white;border:0.5px solid #e2e8f0;border-radius:12px;overflow:hidden;margin-bottom:16px}
-.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:0.5px solid #f1f5f9;flex-wrap:wrap;gap:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:#0a2540;padding:24px 16px;display:flex;flex-direction:column;gap:8px}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:8px;margin-bottom:16px}
+.logo-icon{width:36px;height:36px;background:#0f6e56;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:18px;height:18px;fill:white}
+.logo-text{color:white;font-size:14px;font-weight:600;line-height:1.3}
+.logo-sub{color:#64748b;font-size:11px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#94a3b8;font-size:13px;cursor:pointer;transition:all 0.15s}
+.nav-item:hover{background:#1e3a5f;color:white}
+.nav-item.active{background:#0f6e56;color:white}
+.nav-item svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+.sidebar-bottom{margin-top:auto;padding-top:16px;border-top:1px solid #1e3a5f}
+.sophie-status{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#1e3a5f;border-radius:8px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.status-text{color:#9FE1CB;font-size:12px;font-weight:500}
+.main{margin-left:220px;padding:24px;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.page-title{font-size:20px;font-weight:600;color:#0a2540}
+.page-sub{font-size:13px;color:#64748b;margin-top:2px}
+.top-actions{display:flex;align-items:center;gap:10px}
+.date-nav{display:flex;align-items:center;gap:6px;background:white;border:0.5px solid #e2e8f0;border-radius:8px;padding:6px 10px}
+.date-nav button{background:none;border:none;cursor:pointer;color:#64748b;font-size:16px;padding:0 4px;line-height:1}
+.date-nav span{font-size:13px;font-weight:500;color:#0a2540;min-width:80px;text-align:center}
+.btn-primary{background:#0f6e56;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-primary svg{width:14px;height:14px;fill:white}
+.btn-primary:hover{background:#085041}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:white;border-radius:12px;border:0.5px solid #e2e8f0;padding:18px 20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.blue::before{background:#378ADD}
+.stat-card.green::before{background:#1D9E75}
+.stat-card.amber::before{background:#EF9F27}
+.stat-card.red::before{background:#E24B4A}
+.stat-label{font-size:11px;color:#64748b;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px}
+.stat-val{font-size:28px;font-weight:700;color:#0a2540;line-height:1}
+.stat-sub{font-size:11px;color:#94a3b8;margin-top:6px}
+.stat-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.stat-icon.blue{background:#E6F1FB}
+.stat-icon.green{background:#E1F5EE}
+.stat-icon.amber{background:#FAEEDA}
+.stat-icon.red{background:#FCEBEB}
+.stat-icon svg{width:18px;height:18px}
+.card{background:white;border-radius:12px;border:0.5px solid #e2e8f0;overflow:hidden;margin-bottom:16px}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:0.5px solid #f1f5f9}
 .card-title{font-size:14px;font-weight:600;color:#0a2540}
-.card-subtitle{font-size:12px;color:#64748b;margin-top:2px}
-.add-btn{background:#0f6e56;color:white;border:none;border-radius:7px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer}
-.add-btn:hover{background:#085041}
-.add-form{display:none;padding:16px 18px;background:#f8faff;border-bottom:0.5px solid #e2e8f0}
-.form-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end}
-@media(max-width:700px){.form-row{grid-template-columns:1fr 1fr}}
-.fi label{font-size:11px;color:#64748b;margin-bottom:4px;display:block}
-.fi input,.fi select{width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;color:#0a2540;outline:none;background:white}
-.fi input:focus,.fi select:focus{border-color:#0f6e56}
-.filters{display:flex;gap:8px;padding:12px 18px;border-bottom:0.5px solid #f1f5f9;flex-wrap:wrap;align-items:center;justify-content:space-between}
-.filter-group{display:flex;gap:6px;flex-wrap:wrap}
-.filter-btn{background:none;border:1px solid #e2e8f0;border-radius:20px;padding:4px 12px;font-size:11px;color:#64748b;cursor:pointer}
+.card-sub{font-size:12px;color:#64748b;margin-top:2px}
+.filters{display:flex;align-items:center;gap:6px;padding:12px 20px;border-bottom:0.5px solid #f1f5f9;background:#fafbff}
+.filter-btn{padding:5px 14px;border-radius:20px;font-size:12px;border:0.5px solid #e2e8f0;background:white;color:#64748b;cursor:pointer;font-weight:500}
 .filter-btn.active{background:#0f6e56;color:white;border-color:#0f6e56}
-.date-nav{display:flex;align-items:center;gap:8px;font-size:12px;color:#0a2540;font-weight:500}
-.nav-btn{background:none;border:1px solid #e2e8f0;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:12px;color:#64748b}
-.nav-btn:hover{background:#f1f5f9}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:#f8faff;color:#64748b;font-weight:500;text-align:left;padding:10px 18px;border-bottom:0.5px solid #e2e8f0;white-space:nowrap}
-td{padding:12px 18px;border-bottom:0.5px solid #f1f5f9;color:#0a2540;vertical-align:middle}
+.search-input{margin-left:auto;padding:5px 12px;border:0.5px solid #e2e8f0;border-radius:20px;font-size:12px;color:#0a2540;outline:none;width:180px}
+.search-input:focus{border-color:#0f6e56}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#fafbff;color:#64748b;font-weight:500;text-align:left;padding:10px 20px;border-bottom:0.5px solid #e2e8f0;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap}
+td{padding:14px 20px;border-bottom:0.5px solid #f8faff;color:#0a2540;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fafbff}
-.status-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
-.s-confirmed{background:#f0fdf4;color:#166534}
-.s-pending{background:#fefce8;color:#854f0b}
-.s-cancelled{background:#fef2f2;color:#991b1b}
-.r-24hr{background:#eff6ff;color:#1e40af}
-.r-1hr{background:#fefce8;color:#854f0b}
-.r-done{background:#f0fdf4;color:#166534}
-.r-none{background:#f8faff;color:#94a3b8}
-.avatar{width:28px;height:28px;border-radius:50%;background:#e1f5ee;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#0f6e56;flex-shrink:0}
-.patient-cell{display:flex;align-items:center;gap:8px}
-.action-btn{background:none;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;font-size:11px;color:#64748b;cursor:pointer;margin-right:4px}
-.action-btn:hover{background:#f1f5f9}
-.send-btn{background:#0f6e56;border:none;border-radius:6px;padding:4px 10px;font-size:11px;color:white;cursor:pointer}
-.send-btn:hover{background:#085041}
-.send-btn:disabled{background:#9fe1cb;cursor:not-allowed}
-.empty{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
-.loading{text-align:center;padding:40px;color:#64748b;font-size:13px}
-.toast{display:none;position:fixed;bottom:20px;right:20px;background:#0f6e56;color:white;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999}
-.refresh-btn{background:none;border:1px solid #e2e8f0;border-radius:7px;padding:6px 12px;font-size:12px;color:#64748b;cursor:pointer;display:flex;align-items:center;gap:4px}
-.refresh-btn:hover{background:#f1f5f9}
+.avatar{width:32px;height:32px;border-radius:50%;background:#e1f5ee;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#0f6e56;flex-shrink:0}
+.patient-cell{display:flex;align-items:center;gap:10px}
+.patient-name{font-weight:500;font-size:13px;color:#0a2540}
+.patient-phone{font-size:11px;color:#94a3b8;margin-top:1px}
+.time-badge{background:#f0f4f8;color:#0a2540;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;display:inline-block}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.pill-confirmed{background:#E1F5EE;color:#085041}
+.pill-pending{background:#FAEEDA;color:#633806}
+.pill-cancelled{background:#FCEBEB;color:#791F1F}
+.pill-sent{background:#E6F1FB;color:#0C447C}
+.pill-none{background:#f1f5f9;color:#94a3b8}
+.actions{display:flex;align-items:center;gap:6px}
+.btn-sm{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:0.5px solid #e2e8f0;background:white;color:#64748b;transition:all 0.15s}
+.btn-sm:hover{background:#f1f5f9}
+.btn-sm.green{background:#0f6e56;color:white;border-color:#0f6e56}
+.btn-sm.green:hover{background:#085041}
+.btn-sm:disabled{opacity:0.5;cursor:not-allowed}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(10,37,64,0.5);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:white;border-radius:16px;padding:28px;width:100%;max-width:480px;margin:20px}
+.modal-title{font-size:16px;font-weight:600;color:#0a2540;margin-bottom:4px}
+.modal-sub{font-size:13px;color:#64748b;margin-bottom:20px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:5px}
+.fg input,.fg select{width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#0a2540;outline:none;background:white}
+.fg input:focus,.fg select:focus{border-color:#0f6e56;box-shadow:0 0 0 3px rgba(15,110,86,0.08)}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-cancel{flex:1;padding:10px;border:0.5px solid #e2e8f0;border-radius:8px;background:white;color:#64748b;font-size:13px;font-weight:500;cursor:pointer}
+.btn-save{flex:2;padding:10px;border:none;border-radius:8px;background:#0f6e56;color:white;font-size:13px;font-weight:500;cursor:pointer}
+.btn-save:hover{background:#085041}
+.toast{display:none;position:fixed;bottom:24px;right:24px;background:#0a2540;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.empty{text-align:center;padding:48px;color:#94a3b8;font-size:13px}
+.empty svg{width:40px;height:40px;fill:#e2e8f0;margin:0 auto 12px;display:block}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="logo">
+<div class="sidebar">
+  <div class="sidebar-logo">
     <div class="logo-icon">
       <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
     </div>
     <div>
-      <div class="logo-name" id="clinic-name">Melbourne Physio</div>
-      <div class="logo-sub">Appointments dashboard</div>
+      <div class="logo-text" id="sidebar-clinic">Melbourne Physio</div>
+      <div class="logo-sub">Staff portal</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <button class="refresh-btn" onclick="loadAppointments()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="#64748b"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-      Refresh
-    </button>
-    <div class="badge-online">Sophie is online</div>
+
+  <div class="nav-item active">
+    <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+    Dashboard
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+    Appointments
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+    Patients
+  </div>
+  <div class="nav-item">
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+    Sophie chat
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="sophie-status">
+      <div class="status-dot"></div>
+      <div class="status-text">Sophie is online 24/7</div>
+    </div>
   </div>
 </div>
 
-<div class="stats">
-  <div class="stat">
-    <div class="stat-label">Today's appointments</div>
-    <div class="stat-val" id="stat-total">—</div>
-    <div class="stat-sub" id="stat-date">Loading...</div>
-  </div>
-  <div class="stat green">
-    <div class="stat-label">Confirmed</div>
-    <div class="stat-val" id="stat-confirmed">—</div>
-    <div class="stat-sub">Handled by Sophie</div>
-  </div>
-  <div class="stat amber">
-    <div class="stat-label">Awaiting reply</div>
-    <div class="stat-val" id="stat-pending">—</div>
-    <div class="stat-sub">Reminder sent</div>
-  </div>
-  <div class="stat red">
-    <div class="stat-label">Cancelled</div>
-    <div class="stat-val" id="stat-cancelled">—</div>
-    <div class="stat-sub">Today</div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-head">
+<div class="main">
+  <div class="topbar">
     <div>
-      <div class="card-title">Patient appointments</div>
-      <div class="card-subtitle">Sophie sends reminders 24hrs and 1hr before each appointment automatically</div>
+      <div class="page-title">Appointments</div>
+      <div class="page-sub" id="top-date">Loading...</div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button class="add-btn" onclick="toggleForm()">+ Add patient</button>
+    <div class="top-actions">
+      <div class="date-nav">
+        <button onclick="changeDate(-1)">&#8249;</button>
+        <span id="date-display">Today</span>
+        <button onclick="changeDate(1)">&#8250;</button>
+      </div>
+      <button class="btn-primary" onclick="openModal()">
+        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        Add patient
+      </button>
     </div>
   </div>
 
-  <div class="add-form" id="add-form">
-    <div class="form-row">
-      <div class="fi"><label>Patient name *</label><input type="text" id="new-name" placeholder="James Smith"></div>
-      <div class="fi"><label>WhatsApp number *</label><input type="tel" id="new-phone" placeholder="+61 4xx xxx xxx"></div>
-      <div class="fi"><label>Date *</label><input type="date" id="new-date"></div>
-      <div class="fi"><label>Time *</label>
-        <select id="new-time">
+  <div class="stats">
+    <div class="stat-card blue">
+      <div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="#378ADD"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg></div>
+      <div class="stat-label">Total today</div>
+      <div class="stat-val" id="stat-total">0</div>
+      <div class="stat-sub">appointments scheduled</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="#1D9E75"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+      <div class="stat-label">Confirmed</div>
+      <div class="stat-val" id="stat-confirmed">0</div>
+      <div class="stat-sub">replied YES to Sophie</div>
+    </div>
+    <div class="stat-card amber">
+      <div class="stat-icon amber"><svg viewBox="0 0 24 24" fill="#EF9F27"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
+      <div class="stat-label">Awaiting reply</div>
+      <div class="stat-val" id="stat-pending">0</div>
+      <div class="stat-sub">reminder sent</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-icon red"><svg viewBox="0 0 24 24" fill="#E24B4A"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
+      <div class="stat-label">Cancelled</div>
+      <div class="stat-val" id="stat-cancelled">0</div>
+      <div class="stat-sub">today</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="card-title">Patient appointments</div>
+        <div class="card-sub">Sophie sends reminders automatically — 24hrs and 1hr before each visit</div>
+      </div>
+      <button class="btn-sm" onclick="loadAppointments()" style="display:flex;align-items:center;gap:4px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="#64748b"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        Refresh
+      </button>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
+      <button class="filter-btn" onclick="filterTable('confirmed',this)">Confirmed</button>
+      <button class="filter-btn" onclick="filterTable('pending',this)">Pending</button>
+      <button class="filter-btn" onclick="filterTable('cancelled',this)">Cancelled</button>
+      <input class="search-input" type="text" placeholder="Search patient..." id="search-input" oninput="searchTable(this.value)">
+    </div>
+
+    <div id="table-area">
+      <div class="empty">
+        <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
+        Loading appointments...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Patient Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title">Add new patient</div>
+    <div class="modal-sub">Patient will receive a WhatsApp reminder from Sophie automatically</div>
+
+    <div class="fg-row">
+      <div class="fg"><label>First name *</label><input type="text" id="m-firstname" placeholder="James"></div>
+      <div class="fg"><label>Last name *</label><input type="text" id="m-lastname" placeholder="Smith"></div>
+    </div>
+    <div class="fg"><label>WhatsApp number *</label><input type="tel" id="m-phone" placeholder="+61 4xx xxx xxx"></div>
+    <div class="fg-row">
+      <div class="fg"><label>Date *</label><input type="date" id="m-date"></div>
+      <div class="fg"><label>Time *</label>
+        <select id="m-time">
           <option value="">Select time</option>
           <option>9:00 AM</option>
           <option>11:00 AM</option>
@@ -140,51 +235,20 @@ tr:hover td{background:#fafbff}
           <option>4:00 PM</option>
         </select>
       </div>
-      <div class="fi"><label>Practitioner</label>
-        <select id="new-prac">
-          <option>Dr. James Chen</option>
-          <option>Dr. Sarah Mills</option>
-          <option>Dr. Anika Patel</option>
-          <option>Any available</option>
-        </select>
-      </div>
-      <div class="fi"><label>&nbsp;</label>
-        <button class="add-btn" onclick="addPatient()">Save</button>
-      </div>
     </div>
-    <div id="form-error" style="color:#dc2626;font-size:11px;margin-top:8px;display:none"></div>
-  </div>
-
-  <div class="filters">
-    <div class="filter-group">
-      <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
-      <button class="filter-btn" onclick="filterTable('confirmed',this)">Confirmed</button>
-      <button class="filter-btn" onclick="filterTable('pending',this)">Pending</button>
-      <button class="filter-btn" onclick="filterTable('cancelled',this)">Cancelled</button>
+    <div class="fg"><label>Practitioner</label>
+      <select id="m-prac">
+        <option>Dr. James Chen — Physiotherapy</option>
+        <option>Dr. Sarah Mills — Sports Physio</option>
+        <option>Dr. Anika Patel — Clinical Pilates</option>
+        <option>Any available</option>
+      </select>
     </div>
-    <div class="date-nav">
-      <button class="nav-btn" onclick="changeDate(-1)">&#8249;</button>
-      <span id="date-display">Today</span>
-      <button class="nav-btn" onclick="changeDate(1)">&#8250;</button>
+    <div id="modal-error" style="color:#dc2626;font-size:12px;display:none;margin-top:4px"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="addPatient()">Save appointment</button>
     </div>
-  </div>
-
-  <div class="table-wrap">
-    <div id="table-loading" class="loading">Loading appointments...</div>
-    <table id="appt-table" style="display:none">
-      <thead>
-        <tr>
-          <th>Patient</th>
-          <th>Time</th>
-          <th>Practitioner</th>
-          <th>Status</th>
-          <th>Reminder</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="table-body"></tbody>
-    </table>
-    <div id="table-empty" class="empty" style="display:none">No appointments found for this date.</div>
   </div>
 </div>
 
@@ -193,236 +257,197 @@ tr:hover td{background:#fafbff}
 <script>
 let allAppointments = [];
 let currentFilter = 'all';
+let searchQuery = '';
 let currentDate = new Date();
 
-function formatDate(d) {
-  return d.toLocaleDateString('en-AU', {day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'/');
+function formatDate(d){
+  const dd=String(d.getDate()).padStart(2,'0');
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const yyyy=d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 }
 
-function formatDateDisplay(d) {
-  const today = new Date();
-  const tomorrow = new Date(today); tomorrow.setDate(today.getDate()+1);
-  if (d.toDateString() === today.toDateString()) return 'Today';
-  if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+function formatDateDisplay(d){
+  const today=new Date();
+  const tomorrow=new Date(today);tomorrow.setDate(today.getDate()+1);
+  if(d.toDateString()===today.toDateString())return'Today';
+  if(d.toDateString()===tomorrow.toDateString())return'Tomorrow';
   return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
 }
 
-function changeDate(dir) {
-  currentDate.setDate(currentDate.getDate() + dir);
-  document.getElementById('date-display').textContent = formatDateDisplay(currentDate);
+function changeDate(dir){
+  currentDate.setDate(currentDate.getDate()+dir);
+  document.getElementById('date-display').textContent=formatDateDisplay(currentDate);
   loadAppointments();
 }
 
-function getInitials(name) {
-  return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+function getInitials(name){
+  return(name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
 }
 
-function getReminderBadge(reminder) {
-  if (!reminder || reminder === '') return '<span class="status-pill r-none">Not sent</span>';
-  if (reminder.toLowerCase() === 'yes') return '<span class="status-pill r-done">✓ Sent</span>';
-  return '<span class="status-pill r-none">Pending</span>';
+function statusPill(s){
+  const v=(s||'').toLowerCase();
+  if(v==='confirmed'||v==='yes')return'<span class="pill pill-confirmed">✓ Confirmed</span>';
+  if(v==='cancelled'||v==='no')return'<span class="pill pill-cancelled">✕ Cancelled</span>';
+  return'<span class="pill pill-pending">⏳ Awaiting</span>';
 }
 
-function getStatusBadge(status) {
-  if (!status || status === '') return '<span class="status-pill s-pending">⏳ Awaiting</span>';
-  const s = status.toLowerCase();
-  if (s === 'confirmed' || s === 'yes') return '<span class="status-pill s-confirmed">✓ Confirmed</span>';
-  if (s === 'cancelled' || s === 'no') return '<span class="status-pill s-cancelled">✕ Cancelled</span>';
-  return '<span class="status-pill s-pending">⏳ Awaiting</span>';
+function reminderPill(r){
+  if((r||'').toLowerCase()==='yes'||(r||'').toLowerCase()==='sent')return'<span class="pill pill-sent">✓ Sent</span>';
+  return'<span class="pill pill-none">Not sent</span>';
 }
 
-async function loadAppointments() {
-  document.getElementById('table-loading').style.display = 'block';
-  document.getElementById('appt-table').style.display = 'none';
-  document.getElementById('table-empty').style.display = 'none';
+async function loadAppointments(){
+  const dateStr=formatDate(currentDate);
+  document.getElementById('top-date').textContent=formatDateDisplay(currentDate)+' · '+dateStr;
+  document.getElementById('table-area').innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>Loading...</div>';
 
-  try {
-    const dateStr = formatDate(currentDate);
-    const res = await fetch(`/appointments?date=${encodeURIComponent(dateStr)}`);
-    const data = await res.json();
-
-    if (data.clinic_name) {
-      document.getElementById('clinic-name').textContent = data.clinic_name;
+  try{
+    const res=await fetch(`/appointments?date=${encodeURIComponent(dateStr)}`);
+    const data=await res.json();
+    allAppointments=data.appointments||[];
+    if(data.clinic_name){
+      document.getElementById('sidebar-clinic').textContent=data.clinic_name;
+      document.title='Sophie — '+data.clinic_name;
     }
-
-    allAppointments = data.appointments || [];
-    renderTable(allAppointments);
-    updateStats(allAppointments);
-    document.getElementById('stat-date').textContent = formatDateDisplay(currentDate);
-
-  } catch(e) {
-    document.getElementById('table-loading').textContent = 'Error loading data. Check your connection.';
+    updateStats();
+    renderTable();
+  }catch(e){
+    document.getElementById('table-area').innerHTML='<div class="empty">Error loading data. Check connection.</div>';
   }
 }
 
-function updateStats(appts) {
-  document.getElementById('stat-total').textContent = appts.length;
-  document.getElementById('stat-confirmed').textContent = appts.filter(a => {
-    const s = (a['Status'] || '').toLowerCase();
-    return s === 'confirmed' || s === 'yes';
-  }).length;
-  document.getElementById('stat-pending').textContent = appts.filter(a => {
-    const s = (a['Status'] || '').toLowerCase();
-    return !s || s === 'awaiting' || s === 'pending';
-  }).length;
-  document.getElementById('stat-cancelled').textContent = appts.filter(a => {
-    const s = (a['Status'] || '').toLowerCase();
-    return s === 'cancelled' || s === 'no';
-  }).length;
+function updateStats(){
+  document.getElementById('stat-total').textContent=allAppointments.length;
+  document.getElementById('stat-confirmed').textContent=allAppointments.filter(a=>{const s=(a['Status']||'').toLowerCase();return s==='confirmed'||s==='yes';}).length;
+  document.getElementById('stat-pending').textContent=allAppointments.filter(a=>{const s=(a['Status']||'').toLowerCase();return!s||s==='awaiting'||s==='pending';}).length;
+  document.getElementById('stat-cancelled').textContent=allAppointments.filter(a=>{const s=(a['Status']||'').toLowerCase();return s==='cancelled'||s==='no';}).length;
 }
 
-function renderTable(appts) {
-  document.getElementById('table-loading').style.display = 'none';
-
-  const filtered = currentFilter === 'all' ? appts : appts.filter(a => {
-    const s = (a['Status'] || '').toLowerCase();
-    if (currentFilter === 'confirmed') return s === 'confirmed' || s === 'yes';
-    if (currentFilter === 'pending') return !s || s === 'awaiting' || s === 'pending';
-    if (currentFilter === 'cancelled') return s === 'cancelled' || s === 'no';
+function renderTable(){
+  let appts=allAppointments.filter(a=>{
+    if(currentFilter==='confirmed'){const s=(a['Status']||'').toLowerCase();return s==='confirmed'||s==='yes';}
+    if(currentFilter==='pending'){const s=(a['Status']||'').toLowerCase();return!s||s==='awaiting'||s==='pending';}
+    if(currentFilter==='cancelled'){const s=(a['Status']||'').toLowerCase();return s==='cancelled'||s==='no';}
     return true;
   });
 
-  if (filtered.length === 0) {
-    document.getElementById('table-empty').style.display = 'block';
-    document.getElementById('appt-table').style.display = 'none';
+  if(searchQuery){
+    const q=searchQuery.toLowerCase();
+    appts=appts.filter(a=>(a['Patient Name']||'').toLowerCase().includes(q)||(a['Phone Number']||'').includes(q));
+  }
+
+  if(appts.length===0){
+    document.getElementById('table-area').innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>No appointments found for this date.</div>';
     return;
   }
 
-  document.getElementById('appt-table').style.display = 'table';
-  document.getElementById('table-empty').style.display = 'none';
-
-  const tbody = document.getElementById('table-body');
-  tbody.innerHTML = filtered.map((a, i) => {
-    const name = a['Patient Name'] || 'Unknown';
-    const phone = a['Phone Number'] || '';
-    const time = a['Appointment Time'] || '';
-    const prac = a['Practitioner'] || '—';
-    const status = a['Status'] || '';
-    const reminder = a['Reminder Sent'] || '';
-    const initials = getInitials(name);
-
-    return `<tr>
+  const rows=appts.map((a,i)=>{
+    const name=a['Patient Name']||'Unknown';
+    const phone=a['Phone Number']||'';
+    const time=a['Appointment Time']||'—';
+    const prac=a['Practitioner']||'—';
+    return`<tr>
       <td><div class="patient-cell">
-        <div class="avatar">${initials}</div>
-        <div><div style="font-weight:500">${name}</div>
-        <div style="font-size:10px;color:#94a3b8">${phone}</div></div>
+        <div class="avatar">${getInitials(name)}</div>
+        <div><div class="patient-name">${name}</div><div class="patient-phone">${phone}</div></div>
       </div></td>
-      <td>${time}</td>
-      <td>${prac}</td>
-      <td>${getStatusBadge(status)}</td>
-      <td>${getReminderBadge(reminder)}</td>
-      <td>
-        <button class="send-btn" onclick="sendReminder(${i},'${name}','${phone}',this)">Send reminder</button>
-        <button class="action-btn" onclick="markConfirmed(${i})">Confirm</button>
-      </td>
+      <td><span class="time-badge">${time}</span></td>
+      <td style="color:#64748b;font-size:13px">${prac}</td>
+      <td>${statusPill(a['Status'])}</td>
+      <td>${reminderPill(a['Reminder Sent']||a['Reminder 24hr'])}</td>
+      <td><div class="actions">
+        <button class="btn-sm green" onclick="sendReminder(${i},'${name}','${phone}',this)">Send reminder</button>
+        <button class="btn-sm" onclick="markConfirmed(${i})">Confirm</button>
+      </div></td>
     </tr>`;
   }).join('');
+
+  document.getElementById('table-area').innerHTML=`<table><thead><tr>
+    <th>Patient</th><th>Time</th><th>Practitioner</th><th>Status</th><th>Reminder</th><th>Actions</th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function filterTable(filter, btn) {
-  currentFilter = filter;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+function filterTable(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  renderTable(allAppointments);
+  renderTable();
 }
 
-async function sendReminder(idx, name, phone, btn) {
-  btn.disabled = true;
-  btn.textContent = 'Sending...';
-  try {
-    const res = await fetch('/send_reminder', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({name, phone, manual: true})
-    });
-    const data = await res.json();
-    if (data.success) {
-      showToast('Reminder sent to ' + name);
-      btn.textContent = '✓ Sent';
-      setTimeout(() => loadAppointments(), 1500);
-    } else {
-      btn.disabled = false;
-      btn.textContent = 'Send reminder';
-      showToast('Failed: ' + (data.error || 'Unknown error'));
-    }
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = 'Send reminder';
-  }
+function searchTable(q){
+  searchQuery=q;
+  renderTable();
 }
 
-async function markConfirmed(idx) {
-  const appt = allAppointments[idx];
-  if (!appt) return;
-  try {
-    await fetch('/update_status', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({name: appt['Patient Name'], date: appt['Appointment Date'], status: 'Confirmed'})
-    });
-    showToast(appt['Patient Name'] + ' marked as confirmed');
-    setTimeout(() => loadAppointments(), 800);
-  } catch(e) {}
+async function sendReminder(idx,name,phone,btn){
+  btn.disabled=true;btn.textContent='Sending...';
+  try{
+    const res=await fetch('/send_reminder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,manual:true})});
+    const data=await res.json();
+    if(data.success){showToast('Reminder sent to '+name);btn.textContent='✓ Sent';setTimeout(()=>loadAppointments(),1500);}
+    else{btn.disabled=false;btn.textContent='Send reminder';showToast('Failed to send');}
+  }catch(e){btn.disabled=false;btn.textContent='Send reminder';}
 }
 
-function toggleForm() {
-  const f = document.getElementById('add-form');
-  f.style.display = f.style.display === 'block' ? 'none' : 'block';
-  if (f.style.display === 'block') {
-    document.getElementById('new-date').value = currentDate.toISOString().split('T')[0];
-  }
+async function markConfirmed(idx){
+  const a=allAppointments[idx];
+  if(!a)return;
+  try{
+    await fetch('/update_status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:a['Patient Name'],date:a['Appointment Date'],status:'Confirmed'})});
+    showToast(a['Patient Name']+' marked as confirmed');
+    setTimeout(()=>loadAppointments(),800);
+  }catch(e){}
 }
 
-async function addPatient() {
-  const name  = document.getElementById('new-name').value.trim();
-  const phone = document.getElementById('new-phone').value.trim();
-  const date  = document.getElementById('new-date').value;
-  const time  = document.getElementById('new-time').value;
-  const prac  = document.getElementById('new-prac').value;
-  const err   = document.getElementById('form-error');
-
-  if (!name || !phone || !date || !time) {
-    err.style.display = 'block';
-    err.textContent = 'Please fill in all required fields.';
-    return;
-  }
-  err.style.display = 'none';
-
-  try {
-    const res = await fetch('/book', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({name, phone, date, time, practitioner: prac})
-    });
-    const data = await res.json();
-    if (data.success) {
-      showToast('Patient added successfully');
-      document.getElementById('new-name').value = '';
-      document.getElementById('new-phone').value = '';
-      document.getElementById('new-time').value = '';
-      toggleForm();
-      setTimeout(() => loadAppointments(), 800);
-    } else {
-      err.style.display = 'block';
-      err.textContent = data.error || 'Failed to save. Try again.';
-    }
-  } catch(e) {
-    err.style.display = 'block';
-    err.textContent = 'Connection error. Try again.';
-  }
+function openModal(){
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('m-date').value=currentDate.toISOString().split('T')[0];
+  document.getElementById('m-date').min=new Date().toISOString().split('T')[0];
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 3000);
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('modal-error').style.display='none';
 }
 
-document.getElementById('new-date').min = new Date().toISOString().split('T')[0];
-document.getElementById('date-display').textContent = 'Today';
+async function addPatient(){
+  const fn=document.getElementById('m-firstname').value.trim();
+  const ln=document.getElementById('m-lastname').value.trim();
+  const phone=document.getElementById('m-phone').value.trim();
+  const date=document.getElementById('m-date').value;
+  const time=document.getElementById('m-time').value;
+  const prac=document.getElementById('m-prac').value;
+  const err=document.getElementById('modal-error');
+
+  if(!fn||!phone||!date||!time){err.style.display='block';err.textContent='Please fill in all required fields.';return;}
+  err.style.display='none';
+
+  try{
+    const res=await fetch('/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:fn+' '+ln,phone,date,time,practitioner:prac})});
+    const data=await res.json();
+    if(data.success){
+      showToast(fn+' added successfully');
+      closeModal();
+      document.getElementById('m-firstname').value='';
+      document.getElementById('m-lastname').value='';
+      document.getElementById('m-phone').value='';
+      document.getElementById('m-time').value='';
+      setTimeout(()=>loadAppointments(),800);
+    }else{err.style.display='block';err.textContent=data.error||'Failed to save.';}
+  }catch(e){err.style.display='block';err.textContent='Connection error. Try again.';}
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',3000);
+}
+
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('date-display').textContent=formatDateDisplay(currentDate);
 loadAppointments();
-setInterval(loadAppointments, 60000);
+setInterval(loadAppointments,60000);
 </script>
 </body>
 </html>
