@@ -1,453 +1,843 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sophie — Clinic Dashboard</title>
+<title>Sophie — Clinic OS</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
+:root{
+  --bg:#0d0f14;--bg2:#13161d;--bg3:#1a1e28;--bg4:#222736;
+  --border:#2a2f3e;--border2:#353c50;
+  --text:#e8eaf0;--text2:#8890a4;--text3:#4a5168;
+  --green:#00d97e;--green2:#00b868;--green-bg:rgba(0,217,126,0.08);--green-border:rgba(0,217,126,0.2);
+  --amber:#f5a623;--amber-bg:rgba(245,166,35,0.08);
+  --red:#ff4d6d;--red-bg:rgba(255,77,109,0.08);
+  --blue:#4d9fff;--blue-bg:rgba(77,159,255,0.08);
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,0.08);
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --sidebar:220px;--r:10px;--r2:14px;
+}
+[data-theme="light"]{
+  --bg:#f0f4f8;--bg2:#ffffff;--bg3:#f4f6fb;--bg4:#e8ecf5;
+  --border:#e2e6f0;--border2:#cdd3e8;
+  --text:#0d0f14;--text2:#4a5168;--text3:#8890a4;
+  --green:#00a86b;--green2:#008f5a;--green-bg:rgba(0,168,107,0.08);--green-border:rgba(0,168,107,0.2);
+  --amber:#c47d0a;--amber-bg:rgba(196,125,10,0.08);
+  --red:#d63057;--red-bg:rgba(214,48,87,0.08);
+  --blue:#2b7fe0;--blue-bg:rgba(43,127,224,0.08);
+  --purple:#7c3aed;--purple-bg:rgba(124,58,237,0.08);
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:#0a2540;padding:24px 16px;display:flex;flex-direction:column;gap:8px}
-.sidebar-logo{display:flex;align-items:center;gap:10px;padding:8px;margin-bottom:16px}
-.logo-icon{width:36px;height:36px;background:#0f6e56;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.logo-icon svg{width:18px;height:18px;fill:white}
-.logo-text{color:white;font-size:14px;font-weight:600;line-height:1.3}
-.logo-sub{color:#64748b;font-size:11px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#94a3b8;font-size:13px;cursor:pointer;transition:all 0.15s}
-.nav-item:hover{background:#1e3a5f;color:white}
-.nav-item.active{background:#0f6e56;color:white}
-.nav-item svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
-.sidebar-bottom{margin-top:auto;padding-top:16px;border-top:1px solid #1e3a5f}
-.sophie-status{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#1e3a5f;border-radius:8px}
-.status-dot{width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-.status-text{color:#9FE1CB;font-size:12px;font-weight:500}
-.main{margin-left:220px;padding:24px;min-height:100vh}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.page-title{font-size:20px;font-weight:600;color:#0a2540}
-.page-sub{font-size:13px;color:#64748b;margin-top:2px}
-.top-actions{display:flex;align-items:center;gap:10px}
-.date-nav{display:flex;align-items:center;gap:6px;background:white;border:0.5px solid #e2e8f0;border-radius:8px;padding:6px 10px}
-.date-nav button{background:none;border:none;cursor:pointer;color:#64748b;font-size:16px;padding:0 4px;line-height:1}
-.date-nav span{font-size:13px;font-weight:500;color:#0a2540;min-width:80px;text-align:center}
-.btn-primary{background:#0f6e56;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px}
-.btn-primary svg{width:14px;height:14px;fill:white}
-.btn-primary:hover{background:#085041}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.stat-card{background:white;border-radius:12px;border:0.5px solid #e2e8f0;padding:18px 20px;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.stat-card.blue::before{background:#378ADD}
-.stat-card.green::before{background:#1D9E75}
-.stat-card.amber::before{background:#EF9F27}
-.stat-card.red::before{background:#E24B4A}
-.stat-label{font-size:11px;color:#64748b;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:8px}
-.stat-val{font-size:28px;font-weight:700;color:#0a2540;line-height:1}
-.stat-sub{font-size:11px;color:#94a3b8;margin-top:6px}
-.stat-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center}
-.stat-icon.blue{background:#E6F1FB}
-.stat-icon.green{background:#E1F5EE}
-.stat-icon.amber{background:#FAEEDA}
-.stat-icon.red{background:#FCEBEB}
-.stat-icon svg{width:18px;height:18px}
-.card{background:white;border-radius:12px;border:0.5px solid #e2e8f0;overflow:hidden;margin-bottom:16px}
-.card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:0.5px solid #f1f5f9}
-.card-title{font-size:14px;font-weight:600;color:#0a2540}
-.card-sub{font-size:12px;color:#64748b;margin-top:2px}
-.filters{display:flex;align-items:center;gap:6px;padding:12px 20px;border-bottom:0.5px solid #f1f5f9;background:#fafbff}
-.filter-btn{padding:5px 14px;border-radius:20px;font-size:12px;border:0.5px solid #e2e8f0;background:white;color:#64748b;cursor:pointer;font-weight:500}
-.filter-btn.active{background:#0f6e56;color:white;border-color:#0f6e56}
-.search-input{margin-left:auto;padding:5px 12px;border:0.5px solid #e2e8f0;border-radius:20px;font-size:12px;color:#0a2540;outline:none;width:180px}
-.search-input:focus{border-color:#0f6e56}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{background:#fafbff;color:#64748b;font-weight:500;text-align:left;padding:10px 20px;border-bottom:0.5px solid #e2e8f0;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;white-space:nowrap}
-td{padding:14px 20px;border-bottom:0.5px solid #f8faff;color:#0a2540;vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:#fafbff}
-.avatar{width:32px;height:32px;border-radius:50%;background:#e1f5ee;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#0f6e56;flex-shrink:0}
-.patient-cell{display:flex;align-items:center;gap:10px}
-.patient-name{font-weight:500;font-size:13px;color:#0a2540}
-.patient-phone{font-size:11px;color:#94a3b8;margin-top:1px}
-.time-badge{background:#f0f4f8;color:#0a2540;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;display:inline-block}
-.pill{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
-.pill-confirmed{background:#E1F5EE;color:#085041}
-.pill-pending{background:#FAEEDA;color:#633806}
-.pill-cancelled{background:#FCEBEB;color:#791F1F}
-.pill-sent{background:#E6F1FB;color:#0C447C}
-.pill-none{background:#f1f5f9;color:#94a3b8}
-.actions{display:flex;align-items:center;gap:6px}
-.btn-sm{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:0.5px solid #e2e8f0;background:white;color:#64748b;transition:all 0.15s}
-.btn-sm:hover{background:#f1f5f9}
-.btn-sm.green{background:#0f6e56;color:white;border-color:#0f6e56}
-.btn-sm.green:hover{background:#085041}
-.btn-sm:disabled{opacity:0.5;cursor:not-allowed}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(10,37,64,0.5);z-index:100;align-items:center;justify-content:center}
-.modal-bg.open{display:flex}
-.modal{background:white;border-radius:16px;padding:28px;width:100%;max-width:480px;margin:20px}
-.modal-title{font-size:16px;font-weight:600;color:#0a2540;margin-bottom:4px}
-.modal-sub{font-size:13px;color:#64748b;margin-bottom:20px}
-.fg{margin-bottom:14px}
-.fg label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:5px}
-.fg input,.fg select{width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#0a2540;outline:none;background:white}
-.fg input:focus,.fg select:focus{border-color:#0f6e56;box-shadow:0 0 0 3px rgba(15,110,86,0.08)}
-.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.modal-actions{display:flex;gap:10px;margin-top:20px}
-.btn-cancel{flex:1;padding:10px;border:0.5px solid #e2e8f0;border-radius:8px;background:white;color:#64748b;font-size:13px;font-weight:500;cursor:pointer}
-.btn-save{flex:2;padding:10px;border:none;border-radius:8px;background:#0f6e56;color:white;font-size:13px;font-weight:500;cursor:pointer}
-.btn-save:hover{background:#085041}
-.toast{display:none;position:fixed;bottom:24px;right:24px;background:#0a2540;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:200;box-shadow:0 4px 12px rgba(0,0,0,0.15)}
-.empty{text-align:center;padding:48px;color:#94a3b8;font-size:13px}
-.empty svg{width:40px;height:40px;fill:#e2e8f0;margin:0 auto 12px;display:block}
-@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.stats{grid-template-columns:repeat(2,1fr)}}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background 0.2s,color 0.2s}
+a{color:inherit;text-decoration:none}
+button{font-family:var(--font);cursor:pointer}
+input,select,textarea{font-family:var(--font)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
 
-<div class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">
-      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-    </div>
-    <div>
-      <div class="logo-text" id="sidebar-clinic">Melbourne Physio</div>
-      <div class="logo-sub">Staff portal</div>
-    </div>
-  </div>
+// ── API ───────────────────────────────────────────────────────────────────────
+const api = {
+  get: (url) => fetch(url).then(r => r.json()),
+  post: (url, data) => fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json()),
+};
 
-  <div class="nav-item active">
-    <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-    Dashboard
-  </div>
-  <div class="nav-item">
-    <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
-    Appointments
-  </div>
-  <div class="nav-item">
-    <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-    Patients
-  </div>
-  <div class="nav-item">
-    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
-    Sophie chat
-  </div>
-
-  <div class="sidebar-bottom">
-    <div class="sophie-status">
-      <div class="status-dot"></div>
-      <div class="status-text">Sophie is online 24/7</div>
-    </div>
-  </div>
-</div>
-
-<div class="main">
-  <div class="topbar">
-    <div>
-      <div class="page-title">Appointments</div>
-      <div class="page-sub" id="top-date">Loading...</div>
-    </div>
-    <div class="top-actions">
-      <div class="date-nav">
-        <button onclick="changeDate(-1)">&#8249;</button>
-        <span id="date-display">Today</span>
-        <button onclick="changeDate(1)">&#8250;</button>
-      </div>
-      <button class="btn-primary" onclick="openModal()">
-        <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        Add patient
-      </button>
-    </div>
-  </div>
-
-  <div class="stats">
-    <div class="stat-card blue">
-      <div class="stat-icon blue"><svg viewBox="0 0 24 24" fill="#378ADD"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg></div>
-      <div class="stat-label">Total today</div>
-      <div class="stat-val" id="stat-total">0</div>
-      <div class="stat-sub">appointments scheduled</div>
-    </div>
-    <div class="stat-card green">
-      <div class="stat-icon green"><svg viewBox="0 0 24 24" fill="#1D9E75"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
-      <div class="stat-label">Confirmed</div>
-      <div class="stat-val" id="stat-confirmed">0</div>
-      <div class="stat-sub">replied YES to Sophie</div>
-    </div>
-    <div class="stat-card amber">
-      <div class="stat-icon amber"><svg viewBox="0 0 24 24" fill="#EF9F27"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
-      <div class="stat-label">Awaiting reply</div>
-      <div class="stat-val" id="stat-pending">0</div>
-      <div class="stat-sub">reminder sent</div>
-    </div>
-    <div class="stat-card red">
-      <div class="stat-icon red"><svg viewBox="0 0 24 24" fill="#E24B4A"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
-      <div class="stat-label">Cancelled</div>
-      <div class="stat-val" id="stat-cancelled">0</div>
-      <div class="stat-sub">today</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-head">
-      <div>
-        <div class="card-title">Patient appointments</div>
-        <div class="card-sub">Sophie sends reminders automatically — 24hrs and 1hr before each visit</div>
-      </div>
-      <button class="btn-sm" onclick="loadAppointments()" style="display:flex;align-items:center;gap:4px">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="#64748b"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-        Refresh
-      </button>
-    </div>
-
-    <div class="filters">
-      <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
-      <button class="filter-btn" onclick="filterTable('confirmed',this)">Confirmed</button>
-      <button class="filter-btn" onclick="filterTable('pending',this)">Pending</button>
-      <button class="filter-btn" onclick="filterTable('cancelled',this)">Cancelled</button>
-      <input class="search-input" type="text" placeholder="Search patient..." id="search-input" oninput="searchTable(this.value)">
-    </div>
-
-    <div id="table-area">
-      <div class="empty">
-        <svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>
-        Loading appointments...
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Add Patient Modal -->
-<div class="modal-bg" id="modal">
-  <div class="modal">
-    <div class="modal-title">Add new patient</div>
-    <div class="modal-sub">Patient will receive a WhatsApp reminder from Sophie automatically</div>
-
-    <div class="fg-row">
-      <div class="fg"><label>First name *</label><input type="text" id="m-firstname" placeholder="James"></div>
-      <div class="fg"><label>Last name *</label><input type="text" id="m-lastname" placeholder="Smith"></div>
-    </div>
-    <div class="fg"><label>WhatsApp number *</label><input type="tel" id="m-phone" placeholder="+61 4xx xxx xxx"></div>
-    <div class="fg-row">
-      <div class="fg"><label>Date *</label><input type="date" id="m-date"></div>
-      <div class="fg"><label>Time *</label>
-        <select id="m-time">
-          <option value="">Select time</option>
-          <option>9:00 AM</option>
-          <option>11:00 AM</option>
-          <option>2:00 PM</option>
-          <option>4:00 PM</option>
-        </select>
-      </div>
-    </div>
-    <div class="fg"><label>Practitioner</label>
-      <select id="m-prac">
-        <option>Dr. James Chen — Physiotherapy</option>
-        <option>Dr. Sarah Mills — Sports Physio</option>
-        <option>Dr. Anika Patel — Clinical Pilates</option>
-        <option>Any available</option>
-      </select>
-    </div>
-    <div id="modal-error" style="color:#dc2626;font-size:12px;display:none;margin-top:4px"></div>
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-save" onclick="addPatient()">Save appointment</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-let allAppointments = [];
-let currentFilter = 'all';
-let searchQuery = '';
-let currentDate = new Date();
-
-function formatDate(d){
-  const dd=String(d.getDate()).padStart(2,'0');
-  const mm=String(d.getMonth()+1).padStart(2,'0');
-  const yyyy=d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
-}
-
-function formatDateDisplay(d){
-  const today=new Date();
-  const tomorrow=new Date(today);tomorrow.setDate(today.getDate()+1);
-  if(d.toDateString()===today.toDateString())return'Today';
-  if(d.toDateString()===tomorrow.toDateString())return'Tomorrow';
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const fmtDate = (d) => {
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+};
+const fmtDisplay = (d) => {
+  const t = new Date(); const tm = new Date(t); tm.setDate(t.getDate()+1);
+  if (d.toDateString()===t.toDateString()) return 'Today';
+  if (d.toDateString()===tm.toDateString()) return 'Tomorrow';
   return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
-}
+};
+const initials = (n) => (n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+const avatarColor = (n) => {
+  const colors = ['green','blue','purple','amber'];
+  return colors[((n||'A').charCodeAt(0))%colors.length];
+};
 
-function changeDate(dir){
-  currentDate.setDate(currentDate.getDate()+dir);
-  document.getElementById('date-display').textContent=formatDateDisplay(currentDate);
-  loadAppointments();
-}
+// ── STYLES ────────────────────────────────────────────────────────────────────
+const S = {
+  sidebar: {position:'fixed',left:0,top:0,bottom:0,width:'var(--sidebar)',background:'var(--bg2)',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',zIndex:100},
+  main: {marginLeft:'var(--sidebar)',minHeight:'100vh',display:'flex',flexDirection:'column'},
+  topbar: {display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 24px',borderBottom:'1px solid var(--border)',background:'var(--bg2)',position:'sticky',top:0,zIndex:50,flexWrap:'wrap',gap:10},
+  content: {padding:'22px 24px',flex:1},
+  card: {background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--r2)',overflow:'hidden',marginBottom:16},
+  cardHead: {display:'flex',alignItems:'center',justifyContent:'space-between',padding:'13px 18px',borderBottom:'1px solid var(--border)',flexWrap:'wrap',gap:8},
+  cardTitle: {fontSize:13,fontWeight:600,color:'var(--text)'},
+  cardSub: {fontSize:11,color:'var(--text3)',marginTop:2},
+  btn: (variant='ghost') => ({
+    display:'inline-flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:'var(--r)',fontSize:13,fontWeight:500,border:'1px solid',cursor:'pointer',transition:'all 0.15s',
+    ...(variant==='primary' ? {background:'var(--green)',color:'var(--bg)',borderColor:'var(--green)'} : {background:'transparent',color:'var(--text2)',borderColor:'var(--border)'}),
+  }),
+  iconBtn: {width:32,height:32,borderRadius:8,border:'1px solid var(--border)',background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',transition:'all 0.15s',color:'var(--text2)',alignItems:'center',justifyContent:'center'},
+  pill: (type) => {
+    const map = {confirmed:{bg:'var(--green-bg)',c:'var(--green)'},pending:{bg:'var(--amber-bg)',c:'var(--amber)'},cancelled:{bg:'var(--red-bg)',c:'var(--red)'},sent:{bg:'var(--blue-bg)',c:'var(--blue)'},none:{bg:'var(--bg4)',c:'var(--text3)'}};
+    const m = map[type]||map.none;
+    return {display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:500,background:m.bg,color:m.c,whiteSpace:'nowrap',fontFamily:'var(--mono)'};
+  },
+  avatar: (color) => {
+    const map = {green:{bg:'var(--green-bg)',c:'var(--green)'},blue:{bg:'var(--blue-bg)',c:'var(--blue)'},purple:{bg:'var(--purple-bg)',c:'var(--purple)'},amber:{bg:'var(--amber-bg)',c:'var(--amber)'}};
+    const m = map[color]||map.green;
+    return {width:30,height:30,borderRadius:8,background:m.bg,color:m.c,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,flexShrink:0,fontFamily:'var(--mono)'};
+  },
+  input: {width:'100%',padding:'8px 12px',border:'1px solid var(--border)',borderRadius:'var(--r)',background:'var(--bg3)',color:'var(--text)',fontSize:13,outline:'none'},
+  statCard: (color) => {
+    const map = {green:'var(--green)',blue:'var(--blue)',amber:'var(--amber)',red:'var(--red)'};
+    return {background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--r2)',padding:'16px 18px',cursor:'pointer',transition:'all 0.15s',borderBottom:`2px solid ${map[color]||map.blue}`,position:'relative'};
+  },
+};
 
-function getInitials(name){
-  return(name||'?').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-}
+// ── COMPONENTS ────────────────────────────────────────────────────────────────
+const Spinner = () => (
+  <div style={{textAlign:'center',padding:40,color:'var(--text3)',fontSize:13}}>Loading...</div>
+);
 
-function statusPill(s){
-  const v=(s||'').toLowerCase();
-  if(v==='confirmed'||v==='yes')return'<span class="pill pill-confirmed">✓ Confirmed</span>';
-  if(v==='cancelled'||v==='no')return'<span class="pill pill-cancelled">✕ Cancelled</span>';
-  return'<span class="pill pill-pending">⏳ Awaiting</span>';
-}
+const EmptyState = ({msg='No data found'}) => (
+  <div style={{textAlign:'center',padding:48,color:'var(--text3)',fontSize:13}}>{msg}</div>
+);
 
-function reminderPill(r){
-  if((r||'').toLowerCase()==='yes'||(r||'').toLowerCase()==='sent')return'<span class="pill pill-sent">✓ Sent</span>';
-  return'<span class="pill pill-none">Not sent</span>';
-}
+const Toast = ({msg,type,onClose}) => (
+  <div style={{position:'fixed',bottom:24,right:24,background:'var(--bg2)',border:`1px solid var(--border)`,borderLeft:`3px solid ${type==='error'?'var(--red)':'var(--green)'}`,padding:'12px 18px',borderRadius:10,fontSize:13,color:'var(--text)',zIndex:999,animation:'slideUp 0.2s ease',boxShadow:'0 4px 20px rgba(0,0,0,0.3)'}}>
+    {msg}
+  </div>
+);
 
-async function loadAppointments(){
-  const dateStr=formatDate(currentDate);
-  document.getElementById('top-date').textContent=formatDateDisplay(currentDate)+' · '+dateStr;
-  document.getElementById('table-area').innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>Loading...</div>';
+const StatusPill = ({status}) => {
+  const s = (status||'').toLowerCase();
+  const type = s==='confirmed'||s==='yes' ? 'confirmed' : s==='cancelled'||s==='no' ? 'cancelled' : 'pending';
+  const label = type==='confirmed'?'Confirmed':type==='cancelled'?'Cancelled':'Awaiting';
+  return <span style={S.pill(type)}>{label}</span>;
+};
 
-  try{
-    const res=await fetch(`/appointments?date=${encodeURIComponent(dateStr)}`);
-    const data=await res.json();
-    allAppointments=data.appointments||[];
-    if(data.clinic_name){
-      document.getElementById('sidebar-clinic').textContent=data.clinic_name;
-      document.title='Sophie — '+data.clinic_name;
-    }
-    updateStats();
-    renderTable();
-  }catch(e){
-    document.getElementById('table-area').innerHTML='<div class="empty">Error loading data. Check connection.</div>';
-  }
-}
+const ReminderPill = ({val}) => {
+  const sent = (val||'').toLowerCase()==='yes'||(val||'').toLowerCase()==='sent';
+  return <span style={S.pill(sent?'sent':'none')}>{sent?'Sent':'Not sent'}</span>;
+};
 
-function updateStats(){
-  document.getElementById('stat-total').textContent=allAppointments.length;
-  document.getElementById('stat-confirmed').textContent=allAppointments.filter(a=>{const s=(a['Status']||'').toLowerCase();return s==='confirmed'||s==='yes';}).length;
-  document.getElementById('stat-pending').textContent=allAppointments.filter(a=>{const s=(a['Status']||'').toLowerCase();return!s||s==='awaiting'||s==='pending';}).length;
-  document.getElementById('stat-cancelled').textContent=allAppointments.filter(a=>{const s=(a['Status']||'').toLowerCase();return s==='cancelled'||s==='no';}).length;
-}
+const Avatar = ({name,size=30}) => (
+  <div style={{...S.avatar(avatarColor(name)),width:size,height:size,fontSize:size===30?10:11}}>{initials(name)}</div>
+);
 
-function renderTable(){
-  let appts=allAppointments.filter(a=>{
-    if(currentFilter==='confirmed'){const s=(a['Status']||'').toLowerCase();return s==='confirmed'||s==='yes';}
-    if(currentFilter==='pending'){const s=(a['Status']||'').toLowerCase();return!s||s==='awaiting'||s==='pending';}
-    if(currentFilter==='cancelled'){const s=(a['Status']||'').toLowerCase();return s==='cancelled'||s==='no';}
-    return true;
+const Modal = ({open,onClose,title,subtitle,children}) => {
+  if (!open) return null;
+  return (
+    <div onClick={e=>{if(e.target===e.currentTarget)onClose()}} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)'}}>
+      <div style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:18,padding:28,width:'100%',maxWidth:460,margin:20,maxHeight:'90vh',overflowY:'auto'}}>
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:16,fontWeight:600,color:'var(--text)'}}>{title}</div>
+          {subtitle && <div style={{fontSize:12,color:'var(--text3)',marginTop:3}}>{subtitle}</div>}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const FormGroup = ({label,children}) => (
+  <div style={{marginBottom:14}}>
+    <label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--text2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>{label}</label>
+    {children}
+  </div>
+);
+
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+const Sidebar = ({page,setPage,clinic}) => {
+  const navItem = (id,label,icon) => (
+    <div onClick={()=>setPage(id)} style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px',borderRadius:8,color:page===id?'var(--green)':'var(--text2)',background:page===id?'var(--green-bg)':'transparent',fontSize:13,fontWeight:page===id?500:400,cursor:'pointer',marginBottom:1,transition:'all 0.15s',userSelect:'none'}}
+      onMouseOver={e=>{if(page!==id)e.currentTarget.style.background='var(--bg3)'}}
+      onMouseOut={e=>{if(page!==id)e.currentTarget.style.background='transparent'}}>
+      <span style={{fontSize:16}}>{icon}</span>
+      <span>{label}</span>
+    </div>
+  );
+  return (
+    <div style={S.sidebar}>
+      <div style={{padding:'18px 16px 14px',borderBottom:'1px solid var(--border)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <div style={{width:32,height:32,borderRadius:9,background:'var(--green)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 16px rgba(0,217,126,0.3)',flexShrink:0}}>
+            <span style={{fontSize:16}}>📍</span>
+          </div>
+          <div>
+            <div style={{fontSize:13,fontWeight:600,color:'var(--text)',lineHeight:1.2}}>{clinic?.name||'Clinic OS'}</div>
+            <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>clinic-os v1.0</div>
+          </div>
+        </div>
+      </div>
+      <nav style={{padding:'8px 10px',flex:1,overflowY:'auto'}}>
+        <div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Overview</div>
+        {navItem('dashboard','Dashboard','📊')}
+        <div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Clinic</div>
+        {navItem('appointments','Appointments','📅')}
+        {navItem('patients','Patients','👥')}
+        <div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Sophie AI</div>
+        {navItem('chat','Live chat','💬')}
+        {navItem('analytics','Analytics','📈')}
+        <div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>System</div>
+        {navItem('settings','Settings','⚙️')}
+      </nav>
+      <div style={{padding:14,borderTop:'1px solid var(--border)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:8,background:'var(--green-bg)',border:'1px solid var(--green-border)',borderRadius:8,padding:'9px 12px'}}>
+          <div style={{width:7,height:7,borderRadius:'50%',background:'var(--green)',animation:'pulse 2s ease infinite',flexShrink:0}}></div>
+          <div>
+            <div style={{fontSize:11,fontWeight:500,color:'var(--green)',fontFamily:'var(--mono)'}}>Sophie online</div>
+            <div style={{fontSize:10,color:'var(--text3)'}}>AI receptionist active</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+const Dashboard = ({openModal,setPage,showToast}) => {
+  const [stats,setStats] = useState(null);
+  const [appts,setAppts] = useState([]);
+  const [date,setDate] = useState(new Date());
+  const [loading,setLoading] = useState(true);
+
+  const load = useCallback(async() => {
+    setLoading(true);
+    const [s,a] = await Promise.all([
+      api.get('/api/stats'),
+      api.get(`/api/appointments?date=${encodeURIComponent(fmtDate(date))}`)
+    ]);
+    setStats(s); setAppts(a.appointments||[]); setLoading(false);
+  },[date]);
+
+  useEffect(()=>{load();},[load]);
+
+  const changeDate = (d) => { const nd=new Date(date); nd.setDate(nd.getDate()+d); setDate(nd); };
+
+  return (
+    <div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:22}}>
+        {[
+          {label:'Today',val:stats?.today_total??'—',sub:'appointments',color:'blue',icon:'📅'},
+          {label:'Confirmed',val:stats?.confirmed??'—',sub:`${stats?.confirmation_rate??0}% rate`,color:'green',icon:'✅'},
+          {label:'Awaiting',val:stats?.pending??'—',sub:'reminder sent',color:'amber',icon:'⏳'},
+          {label:'Cancelled',val:stats?.cancelled??'—',sub:'this week: '+stats?.week_noshows,color:'red',icon:'❌'},
+        ].map(s=>(
+          <div key={s.label} style={S.statCard(s.color)} onClick={()=>s.label==='Today'&&setPage('appointments')}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
+              <span style={{fontSize:20}}>{s.icon}</span>
+              <span style={{fontSize:10,fontFamily:'var(--mono)',color:'var(--text3)'}}>{s.sub}</span>
+            </div>
+            <div style={{fontSize:30,fontWeight:700,color:'var(--text)',fontFamily:'var(--mono)',lineHeight:1,marginBottom:4}}>{s.val}</div>
+            <div style={{fontSize:12,color:'var(--text2)'}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:16}}>
+        <div style={S.card}>
+          <div style={S.cardHead}>
+            <div>
+              <div style={S.cardTitle}>Schedule</div>
+              <div style={S.cardSub}>Appointments for {fmtDisplay(date)}</div>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6,background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:8,padding:'4px 8px'}}>
+              <button onClick={()=>changeDate(-1)} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16,padding:'0 2px'}}>‹</button>
+              <span style={{fontSize:12,fontFamily:'var(--mono)',color:'var(--text)',minWidth:70,textAlign:'center'}}>{fmtDisplay(date)}</span>
+              <button onClick={()=>changeDate(1)} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16,padding:'0 2px'}}>›</button>
+            </div>
+          </div>
+          {loading ? <Spinner/> : appts.length===0 ? <EmptyState msg="No appointments for this date"/> :
+            appts.map((a,i)=>(
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'11px 18px',borderBottom:'1px solid var(--border)',transition:'background 0.1s'}}
+                onMouseOver={e=>e.currentTarget.style.background='var(--bg3)'}
+                onMouseOut={e=>e.currentTarget.style.background='transparent'}>
+                <span style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--text2)',minWidth:52}}>{a['Appointment Time']||'—'}</span>
+                <Avatar name={a['Patient Name']||'?'}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:500}}>{a['Patient Name']||'Unknown'}</div>
+                  <div style={{fontSize:11,color:'var(--text3)'}}>{(a['Practitioner']||'Any').split('—')[0].trim()}</div>
+                </div>
+                <StatusPill status={a['Status']}/>
+              </div>
+            ))
+          }
+        </div>
+
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          <div style={S.card}>
+            <div style={S.cardHead}><div style={S.cardTitle}>Sophie activity</div></div>
+            <div style={{padding:'8px 14px'}}>
+              {[
+                {dot:'var(--green)',title:'24hr reminders sent',sub:'Auto · 2:00 PM today'},
+                {dot:'var(--green)',title:'Patient confirmed via WhatsApp',sub:'Auto · No staff needed'},
+                {dot:'var(--amber)',title:'Reschedule handled',sub:'Auto · Sophie rebooked'},
+                {dot:'var(--green)',title:'1hr reminders sent',sub:'Auto · All notified'},
+              ].map((a,i)=>(
+                <div key={i} style={{display:'flex',gap:10,padding:'9px 0',borderBottom:i<3?'1px solid var(--border)':'none'}}>
+                  <div style={{width:6,height:6,borderRadius:'50%',background:a.dot,marginTop:5,flexShrink:0}}></div>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>{a.title}</div>
+                    <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)',marginTop:1}}>{a.sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={S.card}>
+            <div style={S.cardHead}><div style={S.cardTitle}>Savings this month</div></div>
+            <div style={{padding:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              {[
+                {val:'$2,400',label:'Revenue saved',c:'var(--green)'},
+                {val:'-83%',label:'No-shows',c:'var(--blue)'},
+                {val:'14h',label:'Receptionist time',c:'var(--purple)'},
+                {val:'6x',label:'ROI on Sophie',c:'var(--amber)'},
+              ].map(s=>(
+                <div key={s.label} style={{background:'var(--bg3)',borderRadius:8,padding:'10px 12px'}}>
+                  <div style={{fontSize:20,fontWeight:700,color:s.c,fontFamily:'var(--mono)'}}>{s.val}</div>
+                  <div style={{fontSize:10,color:'var(--text3)',marginTop:2}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── APPOINTMENTS ──────────────────────────────────────────────────────────────
+const Appointments = ({openModal,showToast}) => {
+  const [appts,setAppts] = useState([]);
+  const [loading,setLoading] = useState(true);
+  const [date,setDate] = useState(new Date());
+  const [filter,setFilter] = useState('all');
+  const [search,setSearch] = useState('');
+
+  const load = useCallback(async()=>{
+    setLoading(true);
+    const d = await api.get(`/api/appointments?date=${encodeURIComponent(fmtDate(date))}`);
+    setAppts(d.appointments||[]); setLoading(false);
+  },[date]);
+
+  useEffect(()=>{load();},[load]);
+
+  const changeDate = (d) => { const nd=new Date(date); nd.setDate(nd.getDate()+d); setDate(nd); };
+
+  const filtered = appts.filter(a => {
+    const s = (a['Status']||'').toLowerCase();
+    const match = filter==='confirmed'?(s==='confirmed'||s==='yes'):filter==='pending'?(!s||s==='awaiting'||s==='pending'):filter==='cancelled'?(s==='cancelled'||s==='no'):true;
+    const q = search.toLowerCase();
+    const matchSearch = !q || (a['Patient Name']||'').toLowerCase().includes(q) || (a['Phone Number']||'').includes(q);
+    return match && matchSearch;
   });
 
-  if(searchQuery){
-    const q=searchQuery.toLowerCase();
-    appts=appts.filter(a=>(a['Patient Name']||'').toLowerCase().includes(q)||(a['Phone Number']||'').includes(q));
-  }
+  const sendReminder = async (a,btn) => {
+    btn.disabled=true; btn.textContent='Sending...';
+    const r = await api.post('/api/send_reminder',{name:a['Patient Name'],phone:a['Phone Number'],date:a['Appointment Date'],time:a['Appointment Time']});
+    if(r.success){showToast('Reminder sent to '+a['Patient Name']);load();}
+    else showToast('Failed to send','error');
+    btn.disabled=false; btn.textContent='Send reminder';
+  };
 
-  if(appts.length===0){
-    document.getElementById('table-area').innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></svg>No appointments found for this date.</div>';
-    return;
-  }
+  const confirm = async (a) => {
+    await api.post('/api/update_status',{name:a['Patient Name'],date:a['Appointment Date'],status:'Confirmed'});
+    showToast(a['Patient Name']+' confirmed'); load();
+  };
 
-  const rows=appts.map((a,i)=>{
-    const name=a['Patient Name']||'Unknown';
-    const phone=a['Phone Number']||'';
-    const time=a['Appointment Time']||'—';
-    const prac=a['Practitioner']||'—';
-    return`<tr>
-      <td><div class="patient-cell">
-        <div class="avatar">${getInitials(name)}</div>
-        <div><div class="patient-name">${name}</div><div class="patient-phone">${phone}</div></div>
-      </div></td>
-      <td><span class="time-badge">${time}</span></td>
-      <td style="color:#64748b;font-size:13px">${prac}</td>
-      <td>${statusPill(a['Status'])}</td>
-      <td>${reminderPill(a['Reminder Sent']||a['Reminder 24hr'])}</td>
-      <td><div class="actions">
-        <button class="btn-sm green" onclick="sendReminder(${i},'${name}','${phone}',this)">Send reminder</button>
-        <button class="btn-sm" onclick="markConfirmed(${i})">Confirm</button>
-      </div></td>
-    </tr>`;
-  }).join('');
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'flex-end',marginBottom:18,gap:8}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:8,padding:'4px 8px'}}>
+          <button onClick={()=>changeDate(-1)} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16}}>‹</button>
+          <span style={{fontSize:12,fontFamily:'var(--mono)',color:'var(--text)',minWidth:70,textAlign:'center'}}>{fmtDisplay(date)}</span>
+          <button onClick={()=>changeDate(1)} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16}}>›</button>
+        </div>
+        <button style={S.btn('primary')} onClick={openModal}>＋ Add patient</button>
+      </div>
+      <div style={S.card}>
+        <div style={S.cardHead}>
+          <div><div style={S.cardTitle}>Patient appointments</div><div style={S.cardSub}>Sophie sends reminders 24hr and 1hr automatically</div></div>
+          <button style={S.btn()} onClick={load}>↻ Refresh</button>
+        </div>
+        <div style={{display:'flex',gap:6,padding:'10px 18px',borderBottom:'1px solid var(--border)',background:'var(--bg3)',flexWrap:'wrap',alignItems:'center'}}>
+          {['all','confirmed','pending','cancelled'].map(f=>(
+            <button key={f} onClick={()=>setFilter(f)} style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:500,border:'1px solid',cursor:'pointer',transition:'all 0.15s',
+              background:filter===f?'var(--green-bg)':'transparent',color:filter===f?'var(--green)':'var(--text2)',borderColor:filter===f?'var(--green-border)':'var(--border)'}}>
+              {f.charAt(0).toUpperCase()+f.slice(1)}
+            </button>
+          ))}
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search patient..." style={{...S.input,marginLeft:'auto',width:180,padding:'5px 10px'}}/>
+        </div>
+        {loading ? <Spinner/> : filtered.length===0 ? <EmptyState msg="No appointments found"/> : (
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+              <thead>
+                <tr style={{background:'var(--bg3)'}}>
+                  {['Patient','Time','Practitioner','Status','Reminder','Actions'].map(h=>(
+                    <th key={h} style={{padding:'9px 18px',textAlign:'left',fontSize:10,fontWeight:600,letterSpacing:'0.08em',textTransform:'uppercase',color:'var(--text3)',borderBottom:'1px solid var(--border)',fontFamily:'var(--mono)',whiteSpace:'nowrap'}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((a,i)=>(
+                  <tr key={i} style={{borderBottom:'1px solid var(--border)'}}
+                    onMouseOver={e=>e.currentTarget.style.background='var(--bg3)'}
+                    onMouseOut={e=>e.currentTarget.style.background='transparent'}>
+                    <td style={{padding:'13px 18px'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <Avatar name={a['Patient Name']||'?'}/>
+                        <div>
+                          <div style={{fontWeight:500,fontSize:13}}>{a['Patient Name']||'Unknown'}</div>
+                          <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)'}}>{a['Phone Number']||''}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{padding:'13px 18px'}}><span style={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:6,padding:'3px 10px',fontSize:12,fontFamily:'var(--mono)'}}>{a['Appointment Time']||'—'}</span></td>
+                    <td style={{padding:'13px 18px',color:'var(--text2)',fontSize:12}}>{a['Practitioner']||'—'}</td>
+                    <td style={{padding:'13px 18px'}}><StatusPill status={a['Status']}/></td>
+                    <td style={{padding:'13px 18px'}}><ReminderPill val={a['Reminder Sent']||a['Reminder 24hr']}/></td>
+                    <td style={{padding:'13px 18px'}}>
+                      <div style={{display:'flex',gap:6}}>
+                        <button style={{...S.btn(),background:'var(--green-bg)',color:'var(--green)',borderColor:'var(--green-border)',fontSize:11,padding:'4px 10px'}}
+                          onClick={e=>sendReminder(a,e.target)}>Send reminder</button>
+                        <button style={{...S.btn(),fontSize:11,padding:'4px 10px'}} onClick={()=>confirm(a)}>Confirm</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
-  document.getElementById('table-area').innerHTML=`<table><thead><tr>
-    <th>Patient</th><th>Time</th><th>Practitioner</th><th>Status</th><th>Reminder</th><th>Actions</th>
-  </tr></thead><tbody>${rows}</tbody></table>`;
-}
+// ── PATIENTS ──────────────────────────────────────────────────────────────────
+const Patients = ({openModal}) => {
+  const [patients,setPatients] = useState([]);
+  const [loading,setLoading] = useState(true);
+  const [search,setSearch] = useState('');
 
-function filterTable(f,btn){
-  currentFilter=f;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderTable();
-}
+  useEffect(()=>{
+    api.get('/api/appointments?date=all').then(d=>{
+      const unique = {};
+      (d.appointments||[]).forEach(p=>{
+        const k = p['Phone Number']||p['Patient Name'];
+        if(!unique[k]) unique[k]={...p,count:0};
+        unique[k].count++;
+      });
+      setPatients(Object.values(unique)); setLoading(false);
+    });
+  },[]);
 
-function searchTable(q){
-  searchQuery=q;
-  renderTable();
-}
+  const filtered = patients.filter(p=>!search||(p['Patient Name']||'').toLowerCase().includes(search.toLowerCase())||(p['Phone Number']||'').includes(search));
 
-async function sendReminder(idx,name,phone,btn){
-  btn.disabled=true;btn.textContent='Sending...';
-  try{
-    const res=await fetch('/send_reminder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,manual:true})});
-    const data=await res.json();
-    if(data.success){showToast('Reminder sent to '+name);btn.textContent='✓ Sent';setTimeout(()=>loadAppointments(),1500);}
-    else{btn.disabled=false;btn.textContent='Send reminder';showToast('Failed to send');}
-  }catch(e){btn.disabled=false;btn.textContent='Send reminder';}
-}
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginBottom:18}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search patients..." style={{...S.input,width:220}}/>
+        <button style={S.btn('primary')} onClick={openModal}>＋ Add patient</button>
+      </div>
+      <div style={S.card}>
+        <div style={S.cardHead}><div style={S.cardTitle}>Patient directory</div><div style={S.cardSub}>{patients.length} total patients</div></div>
+        {loading ? <Spinner/> : filtered.length===0 ? <EmptyState/> : (
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:14,padding:16}}>
+            {filtered.map((p,i)=>(
+              <div key={i} style={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:'var(--r2)',padding:16,transition:'all 0.15s',cursor:'pointer'}}
+                onMouseOver={e=>{e.currentTarget.style.borderColor='var(--border2)';e.currentTarget.style.transform='translateY(-1px)'}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.transform='none'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+                  <Avatar name={p['Patient Name']||'?'} size={38}/>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:600}}>{p['Patient Name']||'Unknown'}</div>
+                    <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)'}}>{p['Phone Number']||'No phone'}</div>
+                  </div>
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                  {[{l:'Visits',v:p.count},{l:'Status',v:(p['Status']||'Pending').slice(0,9)},{l:'Last seen',v:p['Appointment Date']||'—'},{l:'Practitioner',v:(p['Practitioner']||'Any').split('—')[0].replace('Dr. ','').trim().slice(0,10)}].map(s=>(
+                    <div key={s.l} style={{background:'var(--bg2)',borderRadius:8,padding:'8px 10px'}}>
+                      <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)',marginBottom:2}}>{s.l}</div>
+                      <div style={{fontSize:13,fontWeight:600}}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
-async function markConfirmed(idx){
-  const a=allAppointments[idx];
-  if(!a)return;
-  try{
-    await fetch('/update_status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:a['Patient Name'],date:a['Appointment Date'],status:'Confirmed'})});
-    showToast(a['Patient Name']+' marked as confirmed');
-    setTimeout(()=>loadAppointments(),800);
-  }catch(e){}
-}
+// ── CHAT ─────────────────────────────────────────────────────────────────────
+const Chat = ({showToast}) => {
+  const [convos,setConvos] = useState([]);
+  const [selected,setSelected] = useState(null);
+  const [message,setMessage] = useState('');
+  const [loading,setLoading] = useState(true);
+  const [sending,setSending] = useState(false);
+  const messagesEnd = useRef(null);
 
-function openModal(){
-  document.getElementById('modal').classList.add('open');
-  document.getElementById('m-date').value=currentDate.toISOString().split('T')[0];
-  document.getElementById('m-date').min=new Date().toISOString().split('T')[0];
-}
+  const load = useCallback(async()=>{
+    const d = await api.get('/api/chat/conversations');
+    setConvos(d.conversations||[]);
+    if(!selected && d.conversations?.length) setSelected(d.conversations[0]);
+    setLoading(false);
+  },[]);
 
-function closeModal(){
-  document.getElementById('modal').classList.remove('open');
-  document.getElementById('modal-error').style.display='none';
-}
+  useEffect(()=>{load(); const t=setInterval(load,15000); return()=>clearInterval(t);},[load]);
+  useEffect(()=>{messagesEnd.current?.scrollIntoView({behavior:'smooth'});},[selected]);
 
-async function addPatient(){
-  const fn=document.getElementById('m-firstname').value.trim();
-  const ln=document.getElementById('m-lastname').value.trim();
-  const phone=document.getElementById('m-phone').value.trim();
-  const date=document.getElementById('m-date').value;
-  const time=document.getElementById('m-time').value;
-  const prac=document.getElementById('m-prac').value;
-  const err=document.getElementById('modal-error');
+  const send = async () => {
+    if(!message.trim()||!selected) return;
+    setSending(true);
+    const r = await api.post('/api/chat/send',{phone:selected.phone,name:selected.name,message});
+    if(r.success){showToast('Message sent');setMessage('');load();}
+    else showToast('Failed to send','error');
+    setSending(false);
+  };
 
-  if(!fn||!phone||!date||!time){err.style.display='block';err.textContent='Please fill in all required fields.';return;}
-  err.style.display='none';
+  const msgs = selected?.messages||[];
 
-  try{
-    const res=await fetch('/book',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:fn+' '+ln,phone,date,time,practitioner:prac})});
-    const data=await res.json();
-    if(data.success){
-      showToast(fn+' added successfully');
-      closeModal();
-      document.getElementById('m-firstname').value='';
-      document.getElementById('m-lastname').value='';
-      document.getElementById('m-phone').value='';
-      document.getElementById('m-time').value='';
-      setTimeout(()=>loadAppointments(),800);
-    }else{err.style.display='block';err.textContent=data.error||'Failed to save.';}
-  }catch(e){err.style.display='block';err.textContent='Connection error. Try again.';}
-}
+  return (
+    <div style={S.card}>
+      <div style={{display:'grid',gridTemplateColumns:'260px 1fr',height:580}}>
+        <div style={{borderRight:'1px solid var(--border)',overflowY:'auto',background:'var(--bg3)'}}>
+          <div style={{padding:'10px 14px',borderBottom:'1px solid var(--border)',fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)',fontWeight:600,letterSpacing:'0.08em',textTransform:'uppercase'}}>
+            Conversations ({convos.length})
+          </div>
+          {loading ? <Spinner/> : convos.length===0 ? <EmptyState msg="No conversations yet. Patients will appear here when they message Sophie."/> :
+            convos.map((c,i)=>(
+              <div key={i} onClick={()=>setSelected(c)} style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderBottom:'1px solid var(--border)',cursor:'pointer',transition:'all 0.1s',
+                background:selected?.phone===c.phone?'var(--green-bg)':'transparent',
+                borderLeft:selected?.phone===c.phone?'2px solid var(--green)':'2px solid transparent'}}
+                onMouseOver={e=>{if(selected?.phone!==c.phone)e.currentTarget.style.background='var(--bg4)'}}
+                onMouseOut={e=>{if(selected?.phone!==c.phone)e.currentTarget.style.background='transparent'}}>
+                <Avatar name={c.name||'?'}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:500}}>{c.name||'Unknown'}</div>
+                  <div style={{fontSize:11,color:'var(--text3)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:150}}>
+                    {c.messages?.length ? c.messages[c.messages.length-1]?.text?.slice(0,35)+'...' : c.phone}
+                  </div>
+                </div>
+                <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>{c.last_appointment||''}</div>
+              </div>
+            ))
+          }
+        </div>
+        <div style={{display:'flex',flexDirection:'column'}}>
+          {selected ? (
+            <>
+              <div style={{padding:'12px 18px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,background:'var(--bg2)'}}>
+                <Avatar name={selected.name||'?'}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,fontWeight:600}}>{selected.name||'Unknown'}</div>
+                  <div style={{fontSize:11,color:'var(--green)',fontFamily:'var(--mono)'}}>{selected.phone} · {selected.status||'Active patient'}</div>
+                </div>
+                <StatusPill status={selected.status}/>
+              </div>
+              <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:10,background:'var(--bg)'}}>
+                {msgs.length===0 ? <EmptyState msg="No messages yet. Send a message below to start the conversation."/> :
+                  msgs.map((m,i)=>(
+                    <div key={i} style={{maxWidth:'72%',padding:'10px 14px',borderRadius:12,fontSize:13,lineHeight:1.5,alignSelf:m.role==='sophie'?'flex-start':'flex-end',
+                      background:m.role==='sophie'?'var(--green)':'var(--bg2)',
+                      color:m.role==='sophie'?'#000':'var(--text)',
+                      border:m.role==='patient'?'1px solid var(--border)':'none',
+                      borderBottomLeftRadius:m.role==='sophie'?3:12,
+                      borderBottomRightRadius:m.role==='patient'?3:12}}>
+                      {m.text}
+                      <div style={{fontSize:10,opacity:0.6,marginTop:4,fontFamily:'var(--mono)'}}>{m.time}</div>
+                    </div>
+                  ))
+                }
+                <div ref={messagesEnd}/>
+              </div>
+              <div style={{padding:'12px 16px',borderTop:'1px solid var(--border)',display:'flex',gap:8,background:'var(--bg2)'}}>
+                <input value={message} onChange={e=>setMessage(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Send a message as Sophie..." style={{...S.input,borderRadius:20}}/>
+                <button onClick={send} disabled={sending||!message.trim()} style={{background:'var(--green)',color:'#000',border:'none',borderRadius:20,padding:'9px 18px',fontSize:13,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',opacity:sending?0.6:1}}>
+                  {sending?'Sending...':'Send'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text3)',fontSize:13}}>
+              Select a conversation to view messages
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.style.display='block';
-  setTimeout(()=>t.style.display='none',3000);
-}
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+const Analytics = () => {
+  const [data,setData] = useState(null);
+  useEffect(()=>{api.get('/api/analytics').then(setData);},[]);
 
-document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
-document.getElementById('date-display').textContent=formatDateDisplay(currentDate);
-loadAppointments();
-setInterval(loadAppointments,60000);
+  const maxVal = data ? Math.max(...(data.daily||[]).map(d=>d.total),1) : 1;
+
+  return (
+    <div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:18}}>
+        {[
+          {label:'Confirmation rate',val:data?data.confirmation_rate+'%':'—',color:'green',icon:'✅'},
+          {label:'Total appointments',val:data?.total_appointments??'—',color:'blue',icon:'📅'},
+          {label:'Revenue protected',val:data?'$'+data.revenue_saved.toLocaleString():'—',color:'amber',icon:'💰'},
+          {label:'Total patients',val:'—',color:'purple',icon:'👥'},
+        ].map(s=>(
+          <div key={s.label} style={S.statCard(s.color)}>
+            <div style={{fontSize:22,marginBottom:8}}>{s.icon}</div>
+            <div style={{fontSize:26,fontWeight:700,fontFamily:'var(--mono)',color:'var(--text)',lineHeight:1,marginBottom:4}}>{s.val}</div>
+            <div style={{fontSize:12,color:'var(--text2)'}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={S.card}>
+        <div style={S.cardHead}><div style={S.cardTitle}>Last 7 days</div><div style={S.cardSub}>Appointments, confirmed, no-shows</div></div>
+        <div style={{padding:24}}>
+          {!data ? <Spinner/> : (
+            <>
+              <div style={{display:'grid',gridTemplateColumns:`repeat(${(data.daily||[]).length},1fr)`,gap:8,alignItems:'end',height:140,marginBottom:8}}>
+                {(data.daily||[]).map((d,i)=>(
+                  <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-end',height:'100%',gap:4}}>
+                    <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>{d.total}</div>
+                    <div style={{width:'100%',borderRadius:'4px 4px 0 0',background:d.confirmed>0?'var(--green)':'var(--bg4)',height:maxVal?Math.round(d.total/maxVal*100)+'%':'4px',minHeight:4,border:'1px solid var(--border)',transition:'height 0.3s ease'}}></div>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:`repeat(${(data.daily||[]).length},1fr)`,gap:8}}>
+                {(data.daily||[]).map((d,i)=>(
+                  <div key={i} style={{textAlign:'center',fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>{d.date}</div>
+                ))}
+              </div>
+              <div style={{display:'flex',gap:16,marginTop:16}}>
+                <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'var(--text2)'}}>
+                  <div style={{width:10,height:10,borderRadius:2,background:'var(--green)'}}></div>Confirmed
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'var(--text2)'}}>
+                  <div style={{width:10,height:10,borderRadius:2,background:'var(--bg4)'}}></div>No data
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+const Settings = ({clinic,theme,setTheme,showToast}) => {
+  const [section,setSection] = useState('general');
+  const sections = ['General','Appearance','Sophie AI','Reminders','Clinic details'];
+
+  const Toggle = ({checked,onChange}) => (
+    <div onClick={()=>onChange(!checked)} style={{width:38,height:22,borderRadius:11,background:checked?'var(--green)':'var(--bg4)',cursor:'pointer',position:'relative',transition:'background 0.2s',flexShrink:0}}>
+      <div style={{position:'absolute',width:16,height:16,borderRadius:'50%',background:'white',top:3,left:checked?19:3,transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.3)'}}></div>
+    </div>
+  );
+
+  const SettingRow = ({label,desc,right}) => (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 0',borderBottom:'1px solid var(--border)'}}>
+      <div><div style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>{label}</div>{desc&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{desc}</div>}</div>
+      {right}
+    </div>
+  );
+
+  return (
+    <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:20}}>
+      <div style={{display:'flex',flexDirection:'column',gap:2}}>
+        {sections.map(s=>(
+          <div key={s} onClick={()=>setSection(s.toLowerCase().replace(' ',''))} style={{padding:'8px 12px',borderRadius:8,fontSize:13,color:section===s.toLowerCase().replace(' ','')?'var(--text)':'var(--text2)',background:section===s.toLowerCase().replace(' ','')?'var(--bg3)':'transparent',cursor:'pointer',fontWeight:section===s.toLowerCase().replace(' ','')?500:400,transition:'all 0.15s'}}>{s}</div>
+        ))}
+      </div>
+      <div style={S.card}>
+        <div style={{padding:20}}>
+          {section==='general' && <>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>General settings</div>
+            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Manage your clinic preferences</div>
+            <SettingRow label="Auto-refresh" desc="Refresh appointment data every 60 seconds" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+            <SettingRow label="Email notifications" desc="Get emailed when a patient cancels" right={<Toggle checked={false} onChange={()=>{}}/>}/>
+            <SettingRow label="Sound alerts" desc="Play a sound when Sophie gets a reply" right={<Toggle checked={false} onChange={()=>{}}/>}/>
+          </>}
+          {section==='appearance' && <>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Appearance</div>
+            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Customise how the dashboard looks</div>
+            <SettingRow label="Dark mode" desc="Use dark theme across the dashboard" right={<Toggle checked={theme==='dark'} onChange={v=>setTheme(v?'dark':'light')}/>}/>
+            <div style={{paddingTop:14}}>
+              <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>Accent colour</div>
+              <div style={{display:'flex',gap:8}}>
+                {['#00d97e','#4d9fff','#a78bfa','#f5a623','#ff4d6d','#06b6d4'].map(c=>(
+                  <div key={c} onClick={()=>{document.documentElement.style.setProperty('--green',c);showToast('Accent updated');}} style={{width:26,height:26,borderRadius:'50%',background:c,cursor:'pointer',border:'2px solid transparent',transition:'all 0.15s'}}
+                    onMouseOver={e=>e.currentTarget.style.transform='scale(1.15)'}
+                    onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}></div>
+                ))}
+              </div>
+            </div>
+          </>}
+          {section==='sophieai' && <>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Sophie AI settings</div>
+            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Configure how Sophie communicates</div>
+            <SettingRow label="Auto-confirm on YES reply" desc="Automatically mark confirmed when patient replies YES" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+            <SettingRow label="Handle reschedule requests" desc="Sophie offers new slots when patient says NO" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+            <SettingRow label="Post-visit follow-up" desc="Sophie checks in 2 hours after appointment" right={<Toggle checked={false} onChange={()=>{}}/>}/>
+          </>}
+          {section==='reminders' && <>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Reminder settings</div>
+            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Control when Sophie sends reminders</div>
+            <SettingRow label="24 hour reminder" desc="Send reminder day before appointment" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+            <SettingRow label="1 hour reminder" desc="Send reminder 1 hour before" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+            <SettingRow label="30 min follow-up" desc="Follow up if no reply to 24hr reminder" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+            <div style={{paddingTop:16}}>
+              <label style={{fontSize:11,fontWeight:600,color:'var(--text2)',display:'block',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>Daily reminder time</label>
+              <input type="time" defaultValue="14:00" style={{...S.input,width:160}}/>
+            </div>
+          </>}
+          {section==='clinicdetails' && <>
+            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Clinic details</div>
+            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Update information Sophie uses</div>
+            {[{l:'Clinic name',v:clinic?.name},{l:'Address',v:clinic?.address},{l:'Phone',v:clinic?.phone},{l:'Hours',v:clinic?.hours}].map(f=>(
+              <div key={f.l} style={{marginBottom:14}}>
+                <label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--text2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>{f.l}</label>
+                <input defaultValue={f.v||''} style={S.input}/>
+              </div>
+            ))}
+            <button style={S.btn('primary')} onClick={()=>showToast('Clinic details saved!')}>Save changes</button>
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── ADD PATIENT MODAL ─────────────────────────────────────────────────────────
+const AddPatientModal = ({open,onClose,onSuccess,clinic}) => {
+  const [form,setForm] = useState({name:'',phone:'',date:'',time:'',practitioner:'Dr. James Chen — Physiotherapy',notes:''});
+  const [err,setErr] = useState('');
+  const [saving,setSaving] = useState(false);
+
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+
+  const save = async () => {
+    if(!form.name||!form.phone||!form.date||!form.time){setErr('Please fill in all required fields.');return;}
+    setSaving(true); setErr('');
+    const r = await api.post('/api/book',form);
+    setSaving(false);
+    if(r.success){onSuccess(); onClose(); setForm({name:'',phone:'',date:'',time:'',practitioner:'Dr. James Chen — Physiotherapy',notes:''});}
+    else setErr(r.error||'Failed to save.');
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Add new patient" subtitle="Patient will receive automatic WhatsApp reminders from Sophie">
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <FormGroup label="Patient name *"><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="James Smith" style={S.input}/></FormGroup>
+        <FormGroup label="WhatsApp number *"><input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="+61 4xx xxx xxx" style={S.input}/></FormGroup>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <FormGroup label="Date *"><input type="date" value={form.date} onChange={e=>set('date',e.target.value)} min={new Date().toISOString().split('T')[0]} style={S.input}/></FormGroup>
+        <FormGroup label="Time *">
+          <select value={form.time} onChange={e=>set('time',e.target.value)} style={S.input}>
+            <option value="">Select time</option>
+            <option>9:00 AM</option><option>11:00 AM</option><option>2:00 PM</option><option>4:00 PM</option>
+          </select>
+        </FormGroup>
+      </div>
+      <FormGroup label="Practitioner">
+        <select value={form.practitioner} onChange={e=>set('practitioner',e.target.value)} style={S.input}>
+          {(clinic?.practitioners||['Dr. James Chen — Physiotherapy']).map(p=><option key={p}>{p}</option>)}
+          <option>Any available</option>
+        </select>
+      </FormGroup>
+      <FormGroup label="Notes">
+        <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder="Any relevant notes..." style={{...S.input,resize:'vertical',minHeight:64}}/>
+      </FormGroup>
+      {err && <div style={{color:'var(--red)',fontSize:12,marginBottom:8}}>{err}</div>}
+      <div style={{display:'flex',gap:10}}>
+        <button style={{...S.btn(),flex:1,justifyContent:'center'}} onClick={onClose}>Cancel</button>
+        <button style={{...S.btn('primary'),flex:2,justifyContent:'center',opacity:saving?0.7:1}} onClick={save} disabled={saving}>
+          {saving?'Saving...':'Save appointment'}
+        </button>
+      </div>
+    </Modal>
+  );
+};
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+const App = () => {
+  const [page,setPage] = useState('dashboard');
+  const [theme,setTheme] = useState('dark');
+  const [toast,setToast] = useState(null);
+  const [modalOpen,setModalOpen] = useState(false);
+  const [clinic,setClinic] = useState(null);
+  const [refreshKey,setRefreshKey] = useState(0);
+
+  useEffect(()=>{document.documentElement.setAttribute('data-theme',theme);},[theme]);
+  useEffect(()=>{api.get('/api/clinic').then(setClinic);},[]);
+
+  const showToast = (msg,type='success') => {
+    setToast({msg,type});
+    setTimeout(()=>setToast(null),3500);
+  };
+
+  const openModal = () => setModalOpen(true);
+  const onPatientAdded = () => { showToast('Patient added successfully!'); setRefreshKey(k=>k+1); };
+
+  const pages = {dashboard:'Overview',appointments:'Appointments',patients:'Patients',chat:'Live chat',analytics:'Analytics',settings:'Settings'};
+
+  return (
+    <>
+      <style>{`
+        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,217,126,0.4)}50%{box-shadow:0 0 0 6px rgba(0,217,126,0)}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        button:hover{opacity:0.9}
+        *:focus{outline:none}
+      `}</style>
+      <Sidebar page={page} setPage={(p)=>{setPage(p);}} clinic={clinic}/>
+      <div style={S.main}>
+        <div style={S.topbar}>
+          <div>
+            <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)'}}>clinic-os / {page}</div>
+            <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>{pages[page]}</div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <button style={S.iconBtn} onClick={()=>setTheme(t=>t==='dark'?'light':'dark')} title="Toggle theme">
+              {theme==='dark'?'☀️':'🌙'}
+            </button>
+            <button style={S.iconBtn} onClick={()=>setRefreshKey(k=>k+1)} title="Refresh">↻</button>
+            <button style={S.btn('primary')} onClick={openModal}>＋ Add patient</button>
+          </div>
+        </div>
+        <div style={S.content}>
+          {page==='dashboard' && <Dashboard key={refreshKey} openModal={openModal} setPage={setPage} showToast={showToast}/>}
+          {page==='appointments' && <Appointments key={refreshKey} openModal={openModal} showToast={showToast}/>}
+          {page==='patients' && <Patients key={refreshKey} openModal={openModal}/>}
+          {page==='chat' && <Chat showToast={showToast}/>}
+          {page==='analytics' && <Analytics key={refreshKey}/>}
+          {page==='settings' && <Settings clinic={clinic} theme={theme} setTheme={setTheme} showToast={showToast}/>}
+        </div>
+      </div>
+      <AddPatientModal open={modalOpen} onClose={()=>setModalOpen(false)} onSuccess={onPatientAdded} clinic={clinic}/>
+      {toast && <Toast msg={toast.msg} type={toast.type}/>}
+    </>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
