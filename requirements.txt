@@ -3,3 +3,6 @@ twilio
 anthropic
 gunicorn
 python-dotenv
+gspread
+google-auth
+schedule
