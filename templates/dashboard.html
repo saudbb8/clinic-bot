@@ -7,141 +7,110 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0d0f14;--bg2:#13161d;--bg3:#1a1e28;--bg4:#222736;
   --border:#2a2f3e;--border2:#353c50;
   --text:#e8eaf0;--text2:#8890a4;--text3:#4a5168;
-  --green:#00d97e;--green2:#00b868;--green-bg:rgba(0,217,126,0.08);--green-border:rgba(0,217,126,0.2);
-  --amber:#f5a623;--amber-bg:rgba(245,166,35,0.08);
-  --red:#ff4d6d;--red-bg:rgba(255,77,109,0.08);
-  --blue:#4d9fff;--blue-bg:rgba(77,159,255,0.08);
-  --purple:#a78bfa;--purple-bg:rgba(167,139,250,0.08);
+  --green:#00d97e;--green2:#00b868;--gb:rgba(0,217,126,0.08);--gbd:rgba(0,217,126,0.2);
+  --amber:#f5a623;--ab:rgba(245,166,35,0.08);
+  --red:#ff4d6d;--rb:rgba(255,77,109,0.08);
+  --blue:#4d9fff;--bb:rgba(77,159,255,0.08);
+  --purple:#a78bfa;--pb:rgba(167,139,250,0.08);
   --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
-  --sidebar:220px;--r:10px;--r2:14px;
+  --sw:220px;--r:10px;--r2:14px;
 }
 [data-theme="light"]{
-  --bg:#f0f4f8;--bg2:#ffffff;--bg3:#f4f6fb;--bg4:#e8ecf5;
+  --bg:#f0f4f8;--bg2:#fff;--bg3:#f4f6fb;--bg4:#e8ecf5;
   --border:#e2e6f0;--border2:#cdd3e8;
   --text:#0d0f14;--text2:#4a5168;--text3:#8890a4;
-  --green:#00a86b;--green2:#008f5a;--green-bg:rgba(0,168,107,0.08);--green-border:rgba(0,168,107,0.2);
-  --amber:#c47d0a;--amber-bg:rgba(196,125,10,0.08);
-  --red:#d63057;--red-bg:rgba(214,48,87,0.08);
-  --blue:#2b7fe0;--blue-bg:rgba(43,127,224,0.08);
-  --purple:#7c3aed;--purple-bg:rgba(124,58,237,0.08);
+  --green:#00a86b;--green2:#008f5a;--gb:rgba(0,168,107,0.08);--gbd:rgba(0,168,107,0.2);
+  --amber:#c47d0a;--ab:rgba(196,125,10,0.08);
+  --red:#d63057;--rb:rgba(214,48,87,0.08);
+  --blue:#2b7fe0;--bb:rgba(43,127,224,0.08);
+  --purple:#7c3aed;--pb:rgba(124,58,237,0.08);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background 0.2s,color 0.2s}
-a{color:inherit;text-decoration:none}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;transition:background .2s,color .2s}
 button{font-family:var(--font);cursor:pointer}
 input,select,textarea{font-family:var(--font)}
 ::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,217,126,0.4)}50%{box-shadow:0 0 0 6px rgba(0,217,126,0)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback, useRef } = React;
+const {useState,useEffect,useCallback,useRef} = React;
 
-// ── API ───────────────────────────────────────────────────────────────────────
 const api = {
-  get: (url) => fetch(url).then(r => r.json()),
-  post: (url, data) => fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json()),
+  get: url => fetch(url).then(r=>r.json()).catch(()=>({})),
+  post: (url,data) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json()).catch(()=>({})),
 };
 
-// ── UTILS ─────────────────────────────────────────────────────────────────────
-const fmtDate = (d) => {
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  return `${dd}/${mm}/${d.getFullYear()}`;
-};
-const fmtDisplay = (d) => {
-  const t = new Date(); const tm = new Date(t); tm.setDate(t.getDate()+1);
-  if (d.toDateString()===t.toDateString()) return 'Today';
-  if (d.toDateString()===tm.toDateString()) return 'Tomorrow';
+const fmtDate = d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+const fmtDisp = d => {
+  const t=new Date(),tm=new Date(t);tm.setDate(t.getDate()+1);
+  if(d.toDateString()===t.toDateString())return'Today';
+  if(d.toDateString()===tm.toDateString())return'Tomorrow';
   return d.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
 };
-const initials = (n) => (n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
-const avatarColor = (n) => {
-  const colors = ['green','blue','purple','amber'];
-  return colors[((n||'A').charCodeAt(0))%colors.length];
-};
+const inits = n=>(n||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+const aColor = n=>{const c=['green','blue','purple','amber'];return c[((n||'A').charCodeAt(0))%c.length];};
+const statusType = s=>{const v=(s||'').toLowerCase();return v==='confirmed'||v==='yes'?'confirmed':v==='cancelled'||v==='no'?'cancelled':'pending';};
 
 // ── STYLES ────────────────────────────────────────────────────────────────────
-const S = {
-  sidebar: {position:'fixed',left:0,top:0,bottom:0,width:'var(--sidebar)',background:'var(--bg2)',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',zIndex:100},
-  main: {marginLeft:'var(--sidebar)',minHeight:'100vh',display:'flex',flexDirection:'column'},
-  topbar: {display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 24px',borderBottom:'1px solid var(--border)',background:'var(--bg2)',position:'sticky',top:0,zIndex:50,flexWrap:'wrap',gap:10},
-  content: {padding:'22px 24px',flex:1},
-  card: {background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--r2)',overflow:'hidden',marginBottom:16},
-  cardHead: {display:'flex',alignItems:'center',justifyContent:'space-between',padding:'13px 18px',borderBottom:'1px solid var(--border)',flexWrap:'wrap',gap:8},
-  cardTitle: {fontSize:13,fontWeight:600,color:'var(--text)'},
-  cardSub: {fontSize:11,color:'var(--text3)',marginTop:2},
-  btn: (variant='ghost') => ({
-    display:'inline-flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:'var(--r)',fontSize:13,fontWeight:500,border:'1px solid',cursor:'pointer',transition:'all 0.15s',
-    ...(variant==='primary' ? {background:'var(--green)',color:'var(--bg)',borderColor:'var(--green)'} : {background:'transparent',color:'var(--text2)',borderColor:'var(--border)'}),
-  }),
-  iconBtn: {width:32,height:32,borderRadius:8,border:'1px solid var(--border)',background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer',transition:'all 0.15s',color:'var(--text2)',alignItems:'center',justifyContent:'center'},
-  pill: (type) => {
-    const map = {confirmed:{bg:'var(--green-bg)',c:'var(--green)'},pending:{bg:'var(--amber-bg)',c:'var(--amber)'},cancelled:{bg:'var(--red-bg)',c:'var(--red)'},sent:{bg:'var(--blue-bg)',c:'var(--blue)'},none:{bg:'var(--bg4)',c:'var(--text3)'}};
-    const m = map[type]||map.none;
-    return {display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:500,background:m.bg,color:m.c,whiteSpace:'nowrap',fontFamily:'var(--mono)'};
-  },
-  avatar: (color) => {
-    const map = {green:{bg:'var(--green-bg)',c:'var(--green)'},blue:{bg:'var(--blue-bg)',c:'var(--blue)'},purple:{bg:'var(--purple-bg)',c:'var(--purple)'},amber:{bg:'var(--amber-bg)',c:'var(--amber)'}};
-    const m = map[color]||map.green;
-    return {width:30,height:30,borderRadius:8,background:m.bg,color:m.c,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,flexShrink:0,fontFamily:'var(--mono)'};
-  },
-  input: {width:'100%',padding:'8px 12px',border:'1px solid var(--border)',borderRadius:'var(--r)',background:'var(--bg3)',color:'var(--text)',fontSize:13,outline:'none'},
-  statCard: (color) => {
-    const map = {green:'var(--green)',blue:'var(--blue)',amber:'var(--amber)',red:'var(--red)'};
-    return {background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--r2)',padding:'16px 18px',cursor:'pointer',transition:'all 0.15s',borderBottom:`2px solid ${map[color]||map.blue}`,position:'relative'};
-  },
+const pill = type=>{
+  const m={confirmed:{bg:'var(--gb)',c:'var(--green)'},pending:{bg:'var(--ab)',c:'var(--amber)'},cancelled:{bg:'var(--rb)',c:'var(--red)'},sent:{bg:'var(--bb)',c:'var(--blue)'},none:{bg:'var(--bg4)',c:'var(--text3)'}};
+  const s=m[type]||m.none;
+  return{display:'inline-flex',alignItems:'center',gap:4,padding:'3px 10px',borderRadius:20,fontSize:11,fontWeight:500,background:s.bg,color:s.c,whiteSpace:'nowrap',fontFamily:'var(--mono)'};
+};
+const card={background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--r2)',overflow:'hidden',marginBottom:16};
+const cardHead={display:'flex',alignItems:'center',justifyContent:'space-between',padding:'13px 18px',borderBottom:'1px solid var(--border)',flexWrap:'wrap',gap:8};
+const inp={width:'100%',padding:'8px 12px',border:'1px solid var(--border)',borderRadius:'var(--r)',background:'var(--bg3)',color:'var(--text)',fontSize:13,outline:'none'};
+const btn=(v='ghost')=>({display:'inline-flex',alignItems:'center',gap:6,padding:'7px 14px',borderRadius:'var(--r)',fontSize:13,fontWeight:500,border:'1px solid',cursor:'pointer',transition:'all .15s',...(v==='primary'?{background:'var(--green)',color:'var(--bg)',borderColor:'var(--green)'}:{background:'transparent',color:'var(--text2)',borderColor:'var(--border)'})});
+const avatarStyle = color=>{const m={green:{bg:'var(--gb)',c:'var(--green)'},blue:{bg:'var(--bb)',c:'var(--blue)'},purple:{bg:'var(--pb)',c:'var(--purple)'},amber:{bg:'var(--ab)',c:'var(--amber)'}};const s=m[color]||m.green;return{width:30,height:30,borderRadius:8,background:s.bg,color:s.c,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:700,flexShrink:0,fontFamily:'var(--mono)'};};
+const statCard = color=>{const m={green:'var(--green)',blue:'var(--blue)',amber:'var(--amber)',red:'var(--red)'};return{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:'var(--r2)',padding:'16px 18px',cursor:'pointer',transition:'all .15s',borderBottom:`2px solid ${m[color]||m.blue}`};};
+
+// ── ATOMS ─────────────────────────────────────────────────────────────────────
+const Spin = ()=><div style={{textAlign:'center',padding:40,color:'var(--text3)',fontSize:13}}>Loading...</div>;
+const Empty = ({msg='No data found'})=><div style={{textAlign:'center',padding:48,color:'var(--text3)',fontSize:13}}>{msg}</div>;
+
+const Avatar = ({name,size=30})=>(
+  <div style={{...avatarStyle(aColor(name)),width:size,height:size,fontSize:size>30?12:10}}>{inits(name)}</div>
+);
+
+const StatusPill = ({status})=>{
+  const t=statusType(status);
+  return <span style={pill(t)}>{t==='confirmed'?'✓ Confirmed':t==='cancelled'?'✕ Cancelled':'⏳ Awaiting'}</span>;
 };
 
-// ── COMPONENTS ────────────────────────────────────────────────────────────────
-const Spinner = () => (
-  <div style={{textAlign:'center',padding:40,color:'var(--text3)',fontSize:13}}>Loading...</div>
-);
+const ReminderPill = ({val})=>{
+  const sent=(val||'').toLowerCase()==='yes'||(val||'').toLowerCase()==='sent';
+  return <span style={pill(sent?'sent':'none')}>{sent?'✓ Sent':'Not sent'}</span>;
+};
 
-const EmptyState = ({msg='No data found'}) => (
-  <div style={{textAlign:'center',padding:48,color:'var(--text3)',fontSize:13}}>{msg}</div>
-);
-
-const Toast = ({msg,type,onClose}) => (
-  <div style={{position:'fixed',bottom:24,right:24,background:'var(--bg2)',border:`1px solid var(--border)`,borderLeft:`3px solid ${type==='error'?'var(--red)':'var(--green)'}`,padding:'12px 18px',borderRadius:10,fontSize:13,color:'var(--text)',zIndex:999,animation:'slideUp 0.2s ease',boxShadow:'0 4px 20px rgba(0,0,0,0.3)'}}>
+const Toast = ({msg,type})=>(
+  <div style={{position:'fixed',bottom:24,right:24,background:'var(--bg2)',border:'1px solid var(--border)',borderLeft:`3px solid ${type==='error'?'var(--red)':'var(--green)'}`,padding:'12px 18px',borderRadius:10,fontSize:13,color:'var(--text)',zIndex:9999,animation:'slideUp .2s ease',boxShadow:'0 4px 20px rgba(0,0,0,0.3)',maxWidth:320}}>
     {msg}
   </div>
 );
 
-const StatusPill = ({status}) => {
-  const s = (status||'').toLowerCase();
-  const type = s==='confirmed'||s==='yes' ? 'confirmed' : s==='cancelled'||s==='no' ? 'cancelled' : 'pending';
-  const label = type==='confirmed'?'Confirmed':type==='cancelled'?'Cancelled':'Awaiting';
-  return <span style={S.pill(type)}>{label}</span>;
-};
-
-const ReminderPill = ({val}) => {
-  const sent = (val||'').toLowerCase()==='yes'||(val||'').toLowerCase()==='sent';
-  return <span style={S.pill(sent?'sent':'none')}>{sent?'Sent':'Not sent'}</span>;
-};
-
-const Avatar = ({name,size=30}) => (
-  <div style={{...S.avatar(avatarColor(name)),width:size,height:size,fontSize:size===30?10:11}}>{initials(name)}</div>
-);
-
-const Modal = ({open,onClose,title,subtitle,children}) => {
-  if (!open) return null;
-  return (
+const Modal = ({open,onClose,title,subtitle,children,wide})=>{
+  if(!open)return null;
+  return(
     <div onClick={e=>{if(e.target===e.currentTarget)onClose()}} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.65)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)'}}>
-      <div style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:18,padding:28,width:'100%',maxWidth:460,margin:20,maxHeight:'90vh',overflowY:'auto'}}>
-        <div style={{marginBottom:20}}>
-          <div style={{fontSize:16,fontWeight:600,color:'var(--text)'}}>{title}</div>
-          {subtitle && <div style={{fontSize:12,color:'var(--text3)',marginTop:3}}>{subtitle}</div>}
+      <div style={{background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:18,padding:28,width:'100%',maxWidth:wide?640:460,margin:20,maxHeight:'90vh',overflowY:'auto',animation:'fadeIn .15s ease'}}>
+        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20}}>
+          <div>
+            <div style={{fontSize:16,fontWeight:600,color:'var(--text)'}}>{title}</div>
+            {subtitle&&<div style={{fontSize:12,color:'var(--text3)',marginTop:3}}>{subtitle}</div>}
+          </div>
+          <button onClick={onClose} style={{background:'none',border:'none',color:'var(--text3)',fontSize:20,cursor:'pointer',padding:'0 0 0 12px',lineHeight:1}}>×</button>
         </div>
         {children}
       </div>
@@ -149,51 +118,57 @@ const Modal = ({open,onClose,title,subtitle,children}) => {
   );
 };
 
-const FormGroup = ({label,children}) => (
-  <div style={{marginBottom:14}}>
+const FG = ({label,children,half})=>(
+  <div style={{marginBottom:14,gridColumn:half?'auto':'span 1'}}>
     <label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--text2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>{label}</label>
     {children}
   </div>
 );
 
+const Toggle = ({checked,onChange})=>(
+  <div onClick={()=>onChange(!checked)} style={{width:38,height:22,borderRadius:11,background:checked?'var(--green)':'var(--bg4)',cursor:'pointer',position:'relative',transition:'background .2s',flexShrink:0}}>
+    <div style={{position:'absolute',width:16,height:16,borderRadius:'50%',background:'white',top:3,left:checked?19:3,transition:'left .2s',boxShadow:'0 1px 3px rgba(0,0,0,0.3)'}}/>
+  </div>
+);
+
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
-const Sidebar = ({page,setPage,clinic}) => {
-  const navItem = (id,label,icon) => (
-    <div onClick={()=>setPage(id)} style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px',borderRadius:8,color:page===id?'var(--green)':'var(--text2)',background:page===id?'var(--green-bg)':'transparent',fontSize:13,fontWeight:page===id?500:400,cursor:'pointer',marginBottom:1,transition:'all 0.15s',userSelect:'none'}}
+const Sidebar = ({page,setPage,clinic})=>{
+  const nav=(id,label,icon)=>(
+    <div key={id} onClick={()=>setPage(id)}
+      style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px',borderRadius:8,color:page===id?'var(--green)':'var(--text2)',background:page===id?'var(--gb)':'transparent',fontSize:13,fontWeight:page===id?500:400,cursor:'pointer',marginBottom:1,transition:'all .15s',userSelect:'none'}}
       onMouseOver={e=>{if(page!==id)e.currentTarget.style.background='var(--bg3)'}}
       onMouseOut={e=>{if(page!==id)e.currentTarget.style.background='transparent'}}>
-      <span style={{fontSize:16}}>{icon}</span>
+      <span style={{fontSize:16,flexShrink:0}}>{icon}</span>
       <span>{label}</span>
     </div>
   );
-  return (
-    <div style={S.sidebar}>
+  const sec=label=><div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>{label}</div>;
+  return(
+    <div style={{position:'fixed',left:0,top:0,bottom:0,width:'var(--sw)',background:'var(--bg2)',borderRight:'1px solid var(--border)',display:'flex',flexDirection:'column',zIndex:100}}>
       <div style={{padding:'18px 16px 14px',borderBottom:'1px solid var(--border)'}}>
         <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <div style={{width:32,height:32,borderRadius:9,background:'var(--green)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 16px rgba(0,217,126,0.3)',flexShrink:0}}>
-            <span style={{fontSize:16}}>📍</span>
-          </div>
+          <div style={{width:32,height:32,borderRadius:9,background:'var(--green)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 16px rgba(0,217,126,0.3)',flexShrink:0,fontSize:16}}>📍</div>
           <div>
             <div style={{fontSize:13,fontWeight:600,color:'var(--text)',lineHeight:1.2}}>{clinic?.name||'Clinic OS'}</div>
-            <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>clinic-os v1.0</div>
+            <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>clinic-os v2.0</div>
           </div>
         </div>
       </div>
       <nav style={{padding:'8px 10px',flex:1,overflowY:'auto'}}>
-        <div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Overview</div>
-        {navItem('dashboard','Dashboard','📊')}
-        <div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Clinic</div>
-        {navItem('appointments','Appointments','📅')}
-        {navItem('patients','Patients','👥')}
-        <div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>Sophie AI</div>
-        {navItem('chat','Live chat','💬')}
-        {navItem('analytics','Analytics','📈')}
-        <div style={{fontSize:10,color:'var(--text3)',fontWeight:600,letterSpacing:'0.1em',textTransform:'uppercase',padding:'12px 8px 4px'}}>System</div>
-        {navItem('settings','Settings','⚙️')}
+        {sec('Overview')}
+        {nav('dashboard','Dashboard','📊')}
+        {sec('Clinic')}
+        {nav('appointments','Appointments','📅')}
+        {nav('patients','Patients','👥')}
+        {sec('Sophie AI')}
+        {nav('chat','Live chat','💬')}
+        {nav('analytics','Analytics','📈')}
+        {sec('System')}
+        {nav('settings','Settings','⚙️')}
       </nav>
       <div style={{padding:14,borderTop:'1px solid var(--border)'}}>
-        <div style={{display:'flex',alignItems:'center',gap:8,background:'var(--green-bg)',border:'1px solid var(--green-border)',borderRadius:8,padding:'9px 12px'}}>
-          <div style={{width:7,height:7,borderRadius:'50%',background:'var(--green)',animation:'pulse 2s ease infinite',flexShrink:0}}></div>
+        <div style={{display:'flex',alignItems:'center',gap:8,background:'var(--gb)',border:'1px solid var(--gbd)',borderRadius:8,padding:'9px 12px'}}>
+          <div style={{width:7,height:7,borderRadius:'50%',background:'var(--green)',animation:'pulse 2s ease infinite',flexShrink:0}}/>
           <div>
             <div style={{fontSize:11,fontWeight:500,color:'var(--green)',fontFamily:'var(--mono)'}}>Sophie online</div>
             <div style={{fontSize:10,color:'var(--text3)'}}>AI receptionist active</div>
@@ -204,36 +179,131 @@ const Sidebar = ({page,setPage,clinic}) => {
   );
 };
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────────
-const Dashboard = ({openModal,setPage,showToast}) => {
-  const [stats,setStats] = useState(null);
-  const [appts,setAppts] = useState([]);
-  const [date,setDate] = useState(new Date());
-  const [loading,setLoading] = useState(true);
+// ── PATIENT DETAIL MODAL ──────────────────────────────────────────────────────
+const PatientDetailModal = ({patient,open,onClose,showToast,onRefresh})=>{
+  const [sending,setSending]=useState(false);
+  const [msg,setMsg]=useState('');
+  const [status,setStatus]=useState(patient?.Status||'');
 
-  const load = useCallback(async() => {
+  useEffect(()=>{if(patient)setStatus(patient.Status||'');},[patient]);
+
+  if(!patient)return null;
+
+  const updateStatus = async(newStatus)=>{
+    await api.post('/api/update_status',{name:patient['Patient Name'],date:patient['Appointment Date'],status:newStatus});
+    setStatus(newStatus);
+    showToast('Status updated to '+newStatus);
+    onRefresh();
+  };
+
+  const sendMsg = async()=>{
+    if(!msg.trim())return;
+    setSending(true);
+    const r=await api.post('/api/chat/send',{phone:patient['Phone Number'],name:patient['Patient Name'],message:msg});
+    setSending(false);
+    if(r.success){showToast('Message sent to '+patient['Patient Name']);setMsg('');}
+    else showToast('Failed to send — check Twilio sandbox','error');
+  };
+
+  const sendReminder = async()=>{
+    setSending(true);
+    const r=await api.post('/api/send_reminder',{name:patient['Patient Name'],phone:patient['Phone Number'],date:patient['Appointment Date'],time:patient['Appointment Time']});
+    setSending(false);
+    if(r.success){showToast('Reminder sent!');onRefresh();}
+    else showToast('Failed to send reminder','error');
+  };
+
+  const fields=[
+    {l:'Full name',v:patient['Patient Name']},
+    {l:'Phone (WhatsApp)',v:patient['Phone Number']},
+    {l:'Appointment date',v:patient['Appointment Date']},
+    {l:'Appointment time',v:patient['Appointment Time']},
+    {l:'Practitioner',v:patient['Practitioner']||'Any available'},
+    {l:'Reminder sent',v:patient['Reminder Sent']||'No'},
+  ];
+
+  return(
+    <Modal open={open} onClose={onClose} title="Patient details" subtitle="View and manage this patient" wide>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+        <div style={{background:'var(--bg3)',borderRadius:'var(--r2)',padding:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+            <Avatar name={patient['Patient Name']||'?'} size={44}/>
+            <div>
+              <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>{patient['Patient Name']||'Unknown'}</div>
+              <div style={{fontSize:12,color:'var(--text3)',fontFamily:'var(--mono)'}}>{patient['Phone Number']||'No phone'}</div>
+            </div>
+          </div>
+          {fields.map(f=>(
+            <div key={f.l} style={{display:'flex',justifyContent:'space-between',padding:'7px 0',borderBottom:'1px solid var(--border)'}}>
+              <span style={{fontSize:11,color:'var(--text3)'}}>{f.l}</span>
+              <span style={{fontSize:12,fontWeight:500,color:'var(--text)',textAlign:'right',maxWidth:160}}>{f.v||'—'}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div style={{background:'var(--bg3)',borderRadius:'var(--r2)',padding:16}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:12}}>Current status</div>
+            <StatusPill status={status}/>
+            <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:12}}>
+              {['Confirmed','Pending','Cancelled'].map(s=>(
+                <button key={s} onClick={()=>updateStatus(s)} style={{...btn(status.toLowerCase()===s.toLowerCase()?'primary':'ghost'),justifyContent:'center',fontSize:12,padding:'6px 12px'}}>
+                  {s==='Confirmed'?'✓ Mark confirmed':s==='Cancelled'?'✕ Mark cancelled':'⏳ Mark pending'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{background:'var(--bg3)',borderRadius:'var(--r2)',padding:16}}>
+            <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:10}}>Quick actions</div>
+            <button onClick={sendReminder} disabled={sending} style={{...btn('primary'),width:'100%',justifyContent:'center',marginBottom:8,opacity:sending?.6:1}}>
+              📱 Send reminder
+            </button>
+            <div style={{fontSize:11,color:'var(--text3)',textAlign:'center'}}>
+              {patient['Phone Number']
+                ? 'Will WhatsApp '+patient['Phone Number']
+                : '⚠️ No phone number saved'}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style={{background:'var(--bg3)',borderRadius:'var(--r2)',padding:16}}>
+        <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:10}}>Send custom message as Sophie</div>
+        <div style={{fontSize:11,color:'var(--text3)',marginBottom:10,padding:'8px 10px',background:'var(--ab)',borderRadius:8,borderLeft:'3px solid var(--amber)'}}>
+          ⚠️ Twilio trial: patient must first text <strong style={{color:'var(--amber)'}}>"join tribe-smallest"</strong> to +1 415 523 8886 on WhatsApp before they can receive messages.
+        </div>
+        <textarea value={msg} onChange={e=>setMsg(e.target.value)} placeholder="Type a message to send as Sophie..." style={{...inp,resize:'vertical',minHeight:72,marginBottom:8}}/>
+        <button onClick={sendMsg} disabled={sending||!msg.trim()} style={{...btn('primary'),opacity:(sending||!msg.trim())?.5:1}}>
+          {sending?'Sending...':'Send as Sophie'}
+        </button>
+      </div>
+    </Modal>
+  );
+};
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+const Dashboard = ({openModal,setPage,showToast})=>{
+  const [stats,setStats]=useState(null);
+  const [appts,setAppts]=useState([]);
+  const [date,setDate]=useState(new Date());
+  const [loading,setLoading]=useState(true);
+
+  const load=useCallback(async()=>{
     setLoading(true);
-    const [s,a] = await Promise.all([
-      api.get('/api/stats'),
-      api.get(`/api/appointments?date=${encodeURIComponent(fmtDate(date))}`)
-    ]);
-    setStats(s); setAppts(a.appointments||[]); setLoading(false);
+    const [s,a]=await Promise.all([api.get('/api/stats'),api.get(`/api/appointments?date=${encodeURIComponent(fmtDate(date))}`)]);
+    setStats(s);setAppts(a.appointments||[]);setLoading(false);
   },[date]);
 
   useEffect(()=>{load();},[load]);
 
-  const changeDate = (d) => { const nd=new Date(date); nd.setDate(nd.getDate()+d); setDate(nd); };
-
-  return (
-    <div>
+  return(
+    <div style={{animation:'fadeIn .2s ease'}}>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:22}}>
         {[
           {label:'Today',val:stats?.today_total??'—',sub:'appointments',color:'blue',icon:'📅'},
-          {label:'Confirmed',val:stats?.confirmed??'—',sub:`${stats?.confirmation_rate??0}% rate`,color:'green',icon:'✅'},
+          {label:'Confirmed',val:stats?.confirmed??'—',sub:(stats?.confirmation_rate??0)+'% rate',color:'green',icon:'✅'},
           {label:'Awaiting',val:stats?.pending??'—',sub:'reminder sent',color:'amber',icon:'⏳'},
-          {label:'Cancelled',val:stats?.cancelled??'—',sub:'this week: '+stats?.week_noshows,color:'red',icon:'❌'},
+          {label:'Cancelled',val:stats?.cancelled??'—',sub:'week: '+(stats?.week_noshows??0),color:'red',icon:'❌'},
         ].map(s=>(
-          <div key={s.label} style={S.statCard(s.color)} onClick={()=>s.label==='Today'&&setPage('appointments')}>
+          <div key={s.label} style={statCard(s.color)} onClick={()=>s.label==='Today'&&setPage('appointments')}>
             <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
               <span style={{fontSize:20}}>{s.icon}</span>
               <span style={{fontSize:10,fontFamily:'var(--mono)',color:'var(--text3)'}}>{s.sub}</span>
@@ -243,23 +313,22 @@ const Dashboard = ({openModal,setPage,showToast}) => {
           </div>
         ))}
       </div>
-
       <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:16}}>
-        <div style={S.card}>
-          <div style={S.cardHead}>
+        <div style={card}>
+          <div style={cardHead}>
             <div>
-              <div style={S.cardTitle}>Schedule</div>
-              <div style={S.cardSub}>Appointments for {fmtDisplay(date)}</div>
+              <div style={{fontSize:13,fontWeight:600}}>Schedule</div>
+              <div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{fmtDisp(date)}</div>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:6,background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:8,padding:'4px 8px'}}>
-              <button onClick={()=>changeDate(-1)} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16,padding:'0 2px'}}>‹</button>
-              <span style={{fontSize:12,fontFamily:'var(--mono)',color:'var(--text)',minWidth:70,textAlign:'center'}}>{fmtDisplay(date)}</span>
-              <button onClick={()=>changeDate(1)} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16,padding:'0 2px'}}>›</button>
+              <button onClick={()=>{const d=new Date(date);d.setDate(d.getDate()-1);setDate(d);}} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16}}>‹</button>
+              <span style={{fontSize:12,fontFamily:'var(--mono)',color:'var(--text)',minWidth:70,textAlign:'center'}}>{fmtDisp(date)}</span>
+              <button onClick={()=>{const d=new Date(date);d.setDate(d.getDate()+1);setDate(d);}} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16}}>›</button>
             </div>
           </div>
-          {loading ? <Spinner/> : appts.length===0 ? <EmptyState msg="No appointments for this date"/> :
+          {loading?<Spin/>:appts.length===0?<Empty msg="No appointments for this date"/>:
             appts.map((a,i)=>(
-              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'11px 18px',borderBottom:'1px solid var(--border)',transition:'background 0.1s'}}
+              <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'11px 18px',borderBottom:'1px solid var(--border)',transition:'background .1s',cursor:'pointer'}}
                 onMouseOver={e=>e.currentTarget.style.background='var(--bg3)'}
                 onMouseOut={e=>e.currentTarget.style.background='transparent'}>
                 <span style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--text2)',minWidth:52}}>{a['Appointment Time']||'—'}</span>
@@ -273,19 +342,18 @@ const Dashboard = ({openModal,setPage,showToast}) => {
             ))
           }
         </div>
-
         <div style={{display:'flex',flexDirection:'column',gap:14}}>
-          <div style={S.card}>
-            <div style={S.cardHead}><div style={S.cardTitle}>Sophie activity</div></div>
+          <div style={card}>
+            <div style={cardHead}><div style={{fontSize:13,fontWeight:600}}>Sophie activity</div></div>
             <div style={{padding:'8px 14px'}}>
               {[
-                {dot:'var(--green)',title:'24hr reminders sent',sub:'Auto · 2:00 PM today'},
-                {dot:'var(--green)',title:'Patient confirmed via WhatsApp',sub:'Auto · No staff needed'},
-                {dot:'var(--amber)',title:'Reschedule handled',sub:'Auto · Sophie rebooked'},
-                {dot:'var(--green)',title:'1hr reminders sent',sub:'Auto · All notified'},
+                {dot:'var(--green)',title:'24hr reminders sent',sub:'Auto · runs daily at 2pm'},
+                {dot:'var(--green)',title:'Patient confirms → status updates',sub:'Auto · no staff needed'},
+                {dot:'var(--amber)',title:'Reschedule handled by Sophie',sub:'Auto · rebooks patient'},
+                {dot:'var(--green)',title:'Welcome msg on booking',sub:'Auto · new patients notified'},
               ].map((a,i)=>(
                 <div key={i} style={{display:'flex',gap:10,padding:'9px 0',borderBottom:i<3?'1px solid var(--border)':'none'}}>
-                  <div style={{width:6,height:6,borderRadius:'50%',background:a.dot,marginTop:5,flexShrink:0}}></div>
+                  <div style={{width:6,height:6,borderRadius:'50%',background:a.dot,marginTop:5,flexShrink:0}}/>
                   <div>
                     <div style={{fontSize:12,fontWeight:500,color:'var(--text)'}}>{a.title}</div>
                     <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)',marginTop:1}}>{a.sub}</div>
@@ -294,15 +362,10 @@ const Dashboard = ({openModal,setPage,showToast}) => {
               ))}
             </div>
           </div>
-          <div style={S.card}>
-            <div style={S.cardHead}><div style={S.cardTitle}>Savings this month</div></div>
+          <div style={card}>
+            <div style={cardHead}><div style={{fontSize:13,fontWeight:600}}>Savings</div></div>
             <div style={{padding:14,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-              {[
-                {val:'$2,400',label:'Revenue saved',c:'var(--green)'},
-                {val:'-83%',label:'No-shows',c:'var(--blue)'},
-                {val:'14h',label:'Receptionist time',c:'var(--purple)'},
-                {val:'6x',label:'ROI on Sophie',c:'var(--amber)'},
-              ].map(s=>(
+              {[{val:'$2,400',label:'Revenue saved',c:'var(--green)'},{val:'-83%',label:'No-shows',c:'var(--blue)'},{val:'14h',label:'Time saved/week',c:'var(--purple)'},{val:'6x',label:'ROI on Sophie',c:'var(--amber)'}].map(s=>(
                 <div key={s.label} style={{background:'var(--bg3)',borderRadius:8,padding:'10px 12px'}}>
                   <div style={{fontSize:20,fontWeight:700,color:s.c,fontFamily:'var(--mono)'}}>{s.val}</div>
                   <div style={{fontSize:10,color:'var(--text3)',marginTop:2}}>{s.label}</div>
@@ -317,69 +380,72 @@ const Dashboard = ({openModal,setPage,showToast}) => {
 };
 
 // ── APPOINTMENTS ──────────────────────────────────────────────────────────────
-const Appointments = ({openModal,showToast}) => {
-  const [appts,setAppts] = useState([]);
-  const [loading,setLoading] = useState(true);
-  const [date,setDate] = useState(new Date());
-  const [filter,setFilter] = useState('all');
-  const [search,setSearch] = useState('');
+const Appointments = ({openModal,showToast})=>{
+  const [appts,setAppts]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [date,setDate]=useState(new Date());
+  const [filter,setFilter]=useState('all');
+  const [search,setSearch]=useState('');
+  const [selected,setSelected]=useState(null);
 
-  const load = useCallback(async()=>{
+  const load=useCallback(async()=>{
     setLoading(true);
-    const d = await api.get(`/api/appointments?date=${encodeURIComponent(fmtDate(date))}`);
-    setAppts(d.appointments||[]); setLoading(false);
+    const d=await api.get(`/api/appointments?date=${encodeURIComponent(fmtDate(date))}`);
+    setAppts(d.appointments||[]);setLoading(false);
   },[date]);
 
   useEffect(()=>{load();},[load]);
 
-  const changeDate = (d) => { const nd=new Date(date); nd.setDate(nd.getDate()+d); setDate(nd); };
-
-  const filtered = appts.filter(a => {
-    const s = (a['Status']||'').toLowerCase();
-    const match = filter==='confirmed'?(s==='confirmed'||s==='yes'):filter==='pending'?(!s||s==='awaiting'||s==='pending'):filter==='cancelled'?(s==='cancelled'||s==='no'):true;
-    const q = search.toLowerCase();
-    const matchSearch = !q || (a['Patient Name']||'').toLowerCase().includes(q) || (a['Phone Number']||'').includes(q);
-    return match && matchSearch;
+  const filtered=appts.filter(a=>{
+    const s=(a['Status']||'').toLowerCase();
+    const ok=filter==='confirmed'?(s==='confirmed'||s==='yes'):filter==='pending'?(!s||s==='awaiting'||s==='pending'):filter==='cancelled'?(s==='cancelled'||s==='no'):true;
+    const q=search.toLowerCase();
+    return ok&&(!q||(a['Patient Name']||'').toLowerCase().includes(q)||(a['Phone Number']||'').includes(q));
   });
 
-  const sendReminder = async (a,btn) => {
-    btn.disabled=true; btn.textContent='Sending...';
-    const r = await api.post('/api/send_reminder',{name:a['Patient Name'],phone:a['Phone Number'],date:a['Appointment Date'],time:a['Appointment Time']});
+  const sendReminder=async(a,e)=>{
+    e.stopPropagation();
+    const r=await api.post('/api/send_reminder',{name:a['Patient Name'],phone:a['Phone Number'],date:a['Appointment Date'],time:a['Appointment Time']});
     if(r.success){showToast('Reminder sent to '+a['Patient Name']);load();}
-    else showToast('Failed to send','error');
-    btn.disabled=false; btn.textContent='Send reminder';
+    else showToast('Failed — check Twilio sandbox','error');
   };
 
-  const confirm = async (a) => {
+  const confirm=async(a,e)=>{
+    e.stopPropagation();
     await api.post('/api/update_status',{name:a['Patient Name'],date:a['Appointment Date'],status:'Confirmed'});
-    showToast(a['Patient Name']+' confirmed'); load();
+    showToast(a['Patient Name']+' confirmed');load();
   };
 
-  return (
-    <div>
+  return(
+    <div style={{animation:'fadeIn .2s ease'}}>
       <div style={{display:'flex',justifyContent:'flex-end',marginBottom:18,gap:8}}>
         <div style={{display:'flex',alignItems:'center',gap:6,background:'var(--bg2)',border:'1px solid var(--border)',borderRadius:8,padding:'4px 8px'}}>
-          <button onClick={()=>changeDate(-1)} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16}}>‹</button>
-          <span style={{fontSize:12,fontFamily:'var(--mono)',color:'var(--text)',minWidth:70,textAlign:'center'}}>{fmtDisplay(date)}</span>
-          <button onClick={()=>changeDate(1)} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16}}>›</button>
+          <button onClick={()=>{const d=new Date(date);d.setDate(d.getDate()-1);setDate(d);}} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16}}>‹</button>
+          <span style={{fontSize:12,fontFamily:'var(--mono)',color:'var(--text)',minWidth:70,textAlign:'center'}}>{fmtDisp(date)}</span>
+          <button onClick={()=>{const d=new Date(date);d.setDate(d.getDate()+1);setDate(d);}} style={{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:16}}>›</button>
         </div>
-        <button style={S.btn('primary')} onClick={openModal}>＋ Add patient</button>
+        <button style={btn('primary')} onClick={openModal}>＋ Add patient</button>
       </div>
-      <div style={S.card}>
-        <div style={S.cardHead}>
-          <div><div style={S.cardTitle}>Patient appointments</div><div style={S.cardSub}>Sophie sends reminders 24hr and 1hr automatically</div></div>
-          <button style={S.btn()} onClick={load}>↻ Refresh</button>
+
+      <div style={{background:'var(--ab)',border:'1px solid var(--amber)',borderRadius:'var(--r)',padding:'10px 14px',marginBottom:16,fontSize:12,color:'var(--amber)'}}>
+        ⚠️ <strong>Twilio trial note:</strong> Patients must text <strong>"join tribe-smallest"</strong> to <strong>+1 415 523 8886</strong> on WhatsApp once before they can receive messages from Sophie. When you upgrade to a real Twilio number, this is not required.
+      </div>
+
+      <div style={card}>
+        <div style={cardHead}>
+          <div><div style={{fontSize:13,fontWeight:600}}>Patient appointments</div><div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>Click any row to view full patient details</div></div>
+          <button style={btn()} onClick={load}>↻ Refresh</button>
         </div>
         <div style={{display:'flex',gap:6,padding:'10px 18px',borderBottom:'1px solid var(--border)',background:'var(--bg3)',flexWrap:'wrap',alignItems:'center'}}>
           {['all','confirmed','pending','cancelled'].map(f=>(
-            <button key={f} onClick={()=>setFilter(f)} style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:500,border:'1px solid',cursor:'pointer',transition:'all 0.15s',
-              background:filter===f?'var(--green-bg)':'transparent',color:filter===f?'var(--green)':'var(--text2)',borderColor:filter===f?'var(--green-border)':'var(--border)'}}>
+            <button key={f} onClick={()=>setFilter(f)} style={{padding:'4px 12px',borderRadius:20,fontSize:11,fontWeight:500,border:'1px solid',cursor:'pointer',transition:'all .15s',
+              background:filter===f?'var(--gb)':'transparent',color:filter===f?'var(--green)':'var(--text2)',borderColor:filter===f?'var(--gbd)':'var(--border)'}}>
               {f.charAt(0).toUpperCase()+f.slice(1)}
             </button>
           ))}
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search patient..." style={{...S.input,marginLeft:'auto',width:180,padding:'5px 10px'}}/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search patient..." style={{...inp,marginLeft:'auto',width:180,padding:'5px 10px'}}/>
         </div>
-        {loading ? <Spinner/> : filtered.length===0 ? <EmptyState msg="No appointments found"/> : (
+        {loading?<Spin/>:filtered.length===0?<Empty msg="No appointments found"/>:(
           <div style={{overflowX:'auto'}}>
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
               <thead>
@@ -391,7 +457,8 @@ const Appointments = ({openModal,showToast}) => {
               </thead>
               <tbody>
                 {filtered.map((a,i)=>(
-                  <tr key={i} style={{borderBottom:'1px solid var(--border)'}}
+                  <tr key={i} style={{borderBottom:'1px solid var(--border)',cursor:'pointer'}}
+                    onClick={()=>setSelected(a)}
                     onMouseOver={e=>e.currentTarget.style.background='var(--bg3)'}
                     onMouseOut={e=>e.currentTarget.style.background='transparent'}>
                     <td style={{padding:'13px 18px'}}>
@@ -399,19 +466,18 @@ const Appointments = ({openModal,showToast}) => {
                         <Avatar name={a['Patient Name']||'?'}/>
                         <div>
                           <div style={{fontWeight:500,fontSize:13}}>{a['Patient Name']||'Unknown'}</div>
-                          <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)'}}>{a['Phone Number']||''}</div>
+                          <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)'}}>{a['Phone Number']||'No phone ⚠️'}</div>
                         </div>
                       </div>
                     </td>
                     <td style={{padding:'13px 18px'}}><span style={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:6,padding:'3px 10px',fontSize:12,fontFamily:'var(--mono)'}}>{a['Appointment Time']||'—'}</span></td>
-                    <td style={{padding:'13px 18px',color:'var(--text2)',fontSize:12}}>{a['Practitioner']||'—'}</td>
+                    <td style={{padding:'13px 18px',color:'var(--text2)',fontSize:12}}>{(a['Practitioner']||'—').split('—')[0].trim()}</td>
                     <td style={{padding:'13px 18px'}}><StatusPill status={a['Status']}/></td>
                     <td style={{padding:'13px 18px'}}><ReminderPill val={a['Reminder Sent']||a['Reminder 24hr']}/></td>
                     <td style={{padding:'13px 18px'}}>
-                      <div style={{display:'flex',gap:6}}>
-                        <button style={{...S.btn(),background:'var(--green-bg)',color:'var(--green)',borderColor:'var(--green-border)',fontSize:11,padding:'4px 10px'}}
-                          onClick={e=>sendReminder(a,e.target)}>Send reminder</button>
-                        <button style={{...S.btn(),fontSize:11,padding:'4px 10px'}} onClick={()=>confirm(a)}>Confirm</button>
+                      <div style={{display:'flex',gap:6}} onClick={e=>e.stopPropagation()}>
+                        <button style={{...btn(),background:'var(--gb)',color:'var(--green)',borderColor:'var(--gbd)',fontSize:11,padding:'4px 10px'}} onClick={e=>sendReminder(a,e)}>Send reminder</button>
+                        <button style={{...btn(),fontSize:11,padding:'4px 10px'}} onClick={e=>confirm(a,e)}>Confirm</button>
                       </div>
                     </td>
                   </tr>
@@ -421,53 +487,52 @@ const Appointments = ({openModal,showToast}) => {
           </div>
         )}
       </div>
+      <PatientDetailModal patient={selected} open={!!selected} onClose={()=>setSelected(null)} showToast={showToast} onRefresh={load}/>
     </div>
   );
 };
 
 // ── PATIENTS ──────────────────────────────────────────────────────────────────
-const Patients = ({openModal}) => {
-  const [patients,setPatients] = useState([]);
-  const [loading,setLoading] = useState(true);
-  const [search,setSearch] = useState('');
+const Patients = ({openModal,showToast})=>{
+  const [patients,setPatients]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [search,setSearch]=useState('');
+  const [selected,setSelected]=useState(null);
 
   useEffect(()=>{
     api.get('/api/appointments?date=all').then(d=>{
-      const unique = {};
-      (d.appointments||[]).forEach(p=>{
-        const k = p['Phone Number']||p['Patient Name'];
-        if(!unique[k]) unique[k]={...p,count:0};
-        unique[k].count++;
-      });
-      setPatients(Object.values(unique)); setLoading(false);
+      const u={};
+      (d.appointments||[]).forEach(p=>{const k=p['Phone Number']||p['Patient Name'];if(!u[k])u[k]={...p,count:0};u[k].count++;});
+      setPatients(Object.values(u));setLoading(false);
     });
   },[]);
 
-  const filtered = patients.filter(p=>!search||(p['Patient Name']||'').toLowerCase().includes(search.toLowerCase())||(p['Phone Number']||'').includes(search));
+  const filtered=patients.filter(p=>!search||(p['Patient Name']||'').toLowerCase().includes(search.toLowerCase())||(p['Phone Number']||'').includes(search));
 
-  return (
-    <div>
+  return(
+    <div style={{animation:'fadeIn .2s ease'}}>
       <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginBottom:18}}>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search patients..." style={{...S.input,width:220}}/>
-        <button style={S.btn('primary')} onClick={openModal}>＋ Add patient</button>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search patients..." style={{...inp,width:220}}/>
+        <button style={btn('primary')} onClick={openModal}>＋ Add patient</button>
       </div>
-      <div style={S.card}>
-        <div style={S.cardHead}><div style={S.cardTitle}>Patient directory</div><div style={S.cardSub}>{patients.length} total patients</div></div>
-        {loading ? <Spinner/> : filtered.length===0 ? <EmptyState/> : (
+      <div style={card}>
+        <div style={cardHead}><div style={{fontSize:13,fontWeight:600}}>Patient directory</div><div style={{fontSize:11,color:'var(--text3)'}}>{patients.length} total · Click any card for full details</div></div>
+        {loading?<Spin/>:filtered.length===0?<Empty/>:(
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:14,padding:16}}>
             {filtered.map((p,i)=>(
-              <div key={i} style={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:'var(--r2)',padding:16,transition:'all 0.15s',cursor:'pointer'}}
+              <div key={i} onClick={()=>setSelected(p)} style={{background:'var(--bg3)',border:'1px solid var(--border)',borderRadius:'var(--r2)',padding:16,transition:'all .15s',cursor:'pointer'}}
                 onMouseOver={e=>{e.currentTarget.style.borderColor='var(--border2)';e.currentTarget.style.transform='translateY(-1px)'}}
                 onMouseOut={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.transform='none'}}>
                 <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
                   <Avatar name={p['Patient Name']||'?'} size={38}/>
                   <div>
                     <div style={{fontSize:13,fontWeight:600}}>{p['Patient Name']||'Unknown'}</div>
-                    <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)'}}>{p['Phone Number']||'No phone'}</div>
+                    <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)'}}>{p['Phone Number']||'⚠️ No phone'}</div>
                   </div>
+                  <StatusPill status={p['Status']}/>
                 </div>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                  {[{l:'Visits',v:p.count},{l:'Status',v:(p['Status']||'Pending').slice(0,9)},{l:'Last seen',v:p['Appointment Date']||'—'},{l:'Practitioner',v:(p['Practitioner']||'Any').split('—')[0].replace('Dr. ','').trim().slice(0,10)}].map(s=>(
+                  {[{l:'Visits',v:p.count},{l:'Last seen',v:p['Appointment Date']||'—'},{l:'Time',v:p['Appointment Time']||'—'},{l:'Dr.',v:(p['Practitioner']||'Any').split('—')[0].replace('Dr. ','').trim().slice(0,12)}].map(s=>(
                     <div key={s.l} style={{background:'var(--bg2)',borderRadius:8,padding:'8px 10px'}}>
                       <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)',marginBottom:2}}>{s.l}</div>
                       <div style={{fontSize:13,fontWeight:600}}>{s.v}</div>
@@ -479,105 +544,117 @@ const Patients = ({openModal}) => {
           </div>
         )}
       </div>
+      <PatientDetailModal patient={selected} open={!!selected} onClose={()=>setSelected(null)} showToast={showToast} onRefresh={()=>{}}/>
     </div>
   );
 };
 
-// ── CHAT ─────────────────────────────────────────────────────────────────────
-const Chat = ({showToast}) => {
-  const [convos,setConvos] = useState([]);
-  const [selected,setSelected] = useState(null);
-  const [message,setMessage] = useState('');
-  const [loading,setLoading] = useState(true);
-  const [sending,setSending] = useState(false);
-  const messagesEnd = useRef(null);
+// ── CHAT ──────────────────────────────────────────────────────────────────────
+const Chat = ({showToast})=>{
+  const [convos,setConvos]=useState([]);
+  const [sel,setSel]=useState(null);
+  const [msg,setMsg]=useState('');
+  const [loading,setLoading]=useState(true);
+  const [sending,setSending]=useState(false);
+  const msgsEnd=useRef(null);
 
-  const load = useCallback(async()=>{
-    const d = await api.get('/api/chat/conversations');
+  const load=useCallback(async()=>{
+    const d=await api.get('/api/chat/conversations');
     setConvos(d.conversations||[]);
-    if(!selected && d.conversations?.length) setSelected(d.conversations[0]);
     setLoading(false);
   },[]);
 
-  useEffect(()=>{load(); const t=setInterval(load,15000); return()=>clearInterval(t);},[load]);
-  useEffect(()=>{messagesEnd.current?.scrollIntoView({behavior:'smooth'});},[selected]);
+  useEffect(()=>{load();const t=setInterval(load,15000);return()=>clearInterval(t);},[load]);
+  useEffect(()=>{msgsEnd.current?.scrollIntoView({behavior:'smooth'});},[sel]);
 
-  const send = async () => {
-    if(!message.trim()||!selected) return;
+  const send=async()=>{
+    if(!msg.trim()||!sel)return;
     setSending(true);
-    const r = await api.post('/api/chat/send',{phone:selected.phone,name:selected.name,message});
-    if(r.success){showToast('Message sent');setMessage('');load();}
-    else showToast('Failed to send','error');
+    const r=await api.post('/api/chat/send',{phone:sel.phone,name:sel.name,message:msg});
+    if(r.success){showToast('Message sent');setMsg('');load();}
+    else showToast('Failed — check Twilio sandbox','error');
     setSending(false);
   };
 
-  const msgs = selected?.messages||[];
-
-  return (
-    <div style={S.card}>
-      <div style={{display:'grid',gridTemplateColumns:'260px 1fr',height:580}}>
-        <div style={{borderRight:'1px solid var(--border)',overflowY:'auto',background:'var(--bg3)'}}>
-          <div style={{padding:'10px 14px',borderBottom:'1px solid var(--border)',fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)',fontWeight:600,letterSpacing:'0.08em',textTransform:'uppercase'}}>
-            Conversations ({convos.length})
-          </div>
-          {loading ? <Spinner/> : convos.length===0 ? <EmptyState msg="No conversations yet. Patients will appear here when they message Sophie."/> :
-            convos.map((c,i)=>(
-              <div key={i} onClick={()=>setSelected(c)} style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderBottom:'1px solid var(--border)',cursor:'pointer',transition:'all 0.1s',
-                background:selected?.phone===c.phone?'var(--green-bg)':'transparent',
-                borderLeft:selected?.phone===c.phone?'2px solid var(--green)':'2px solid transparent'}}
-                onMouseOver={e=>{if(selected?.phone!==c.phone)e.currentTarget.style.background='var(--bg4)'}}
-                onMouseOut={e=>{if(selected?.phone!==c.phone)e.currentTarget.style.background='transparent'}}>
-                <Avatar name={c.name||'?'}/>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:500}}>{c.name||'Unknown'}</div>
-                  <div style={{fontSize:11,color:'var(--text3)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:150}}>
-                    {c.messages?.length ? c.messages[c.messages.length-1]?.text?.slice(0,35)+'...' : c.phone}
-                  </div>
-                </div>
-                <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>{c.last_appointment||''}</div>
-              </div>
-            ))
-          }
-        </div>
-        <div style={{display:'flex',flexDirection:'column'}}>
-          {selected ? (
-            <>
-              <div style={{padding:'12px 18px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,background:'var(--bg2)'}}>
-                <Avatar name={selected.name||'?'}/>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:14,fontWeight:600}}>{selected.name||'Unknown'}</div>
-                  <div style={{fontSize:11,color:'var(--green)',fontFamily:'var(--mono)'}}>{selected.phone} · {selected.status||'Active patient'}</div>
-                </div>
-                <StatusPill status={selected.status}/>
-              </div>
-              <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:10,background:'var(--bg)'}}>
-                {msgs.length===0 ? <EmptyState msg="No messages yet. Send a message below to start the conversation."/> :
-                  msgs.map((m,i)=>(
-                    <div key={i} style={{maxWidth:'72%',padding:'10px 14px',borderRadius:12,fontSize:13,lineHeight:1.5,alignSelf:m.role==='sophie'?'flex-start':'flex-end',
-                      background:m.role==='sophie'?'var(--green)':'var(--bg2)',
-                      color:m.role==='sophie'?'#000':'var(--text)',
-                      border:m.role==='patient'?'1px solid var(--border)':'none',
-                      borderBottomLeftRadius:m.role==='sophie'?3:12,
-                      borderBottomRightRadius:m.role==='patient'?3:12}}>
-                      {m.text}
-                      <div style={{fontSize:10,opacity:0.6,marginTop:4,fontFamily:'var(--mono)'}}>{m.time}</div>
-                    </div>
-                  ))
-                }
-                <div ref={messagesEnd}/>
-              </div>
-              <div style={{padding:'12px 16px',borderTop:'1px solid var(--border)',display:'flex',gap:8,background:'var(--bg2)'}}>
-                <input value={message} onChange={e=>setMessage(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Send a message as Sophie..." style={{...S.input,borderRadius:20}}/>
-                <button onClick={send} disabled={sending||!message.trim()} style={{background:'var(--green)',color:'#000',border:'none',borderRadius:20,padding:'9px 18px',fontSize:13,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap',opacity:sending?0.6:1}}>
-                  {sending?'Sending...':'Send'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text3)',fontSize:13}}>
-              Select a conversation to view messages
+  return(
+    <div style={{animation:'fadeIn .2s ease'}}>
+      <div style={{background:'var(--ab)',border:'1px solid var(--amber)',borderRadius:'var(--r)',padding:'10px 14px',marginBottom:16,fontSize:12,color:'var(--amber)'}}>
+        ⚠️ <strong>Twilio trial:</strong> Conversations appear here after patients message Sophie on WhatsApp. Patient must first text <strong>"join tribe-smallest"</strong> to +1 415 523 8886.
+      </div>
+      <div style={card}>
+        <div style={{display:'grid',gridTemplateColumns:'260px 1fr',height:580}}>
+          <div style={{borderRight:'1px solid var(--border)',overflowY:'auto',background:'var(--bg3)'}}>
+            <div style={{padding:'10px 14px',borderBottom:'1px solid var(--border)',fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)',fontWeight:600,letterSpacing:'0.08em',textTransform:'uppercase',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              Conversations ({convos.length})
+              <button onClick={load} style={{background:'none',border:'none',color:'var(--text3)',cursor:'pointer',fontSize:14}}>↻</button>
             </div>
-          )}
+            {loading?<Spin/>:convos.length===0?
+              <div style={{padding:20,textAlign:'center'}}>
+                <div style={{fontSize:24,marginBottom:8}}>💬</div>
+                <div style={{fontSize:12,color:'var(--text3)'}}>No conversations yet</div>
+                <div style={{fontSize:11,color:'var(--text3)',marginTop:4}}>Patients appear here when they message Sophie on WhatsApp</div>
+              </div>:
+              convos.map((c,i)=>(
+                <div key={i} onClick={()=>setSel(c)} style={{display:'flex',alignItems:'center',gap:10,padding:'12px 14px',borderBottom:'1px solid var(--border)',cursor:'pointer',transition:'all .1s',
+                  background:sel?.phone===c.phone?'var(--gb)':'transparent',
+                  borderLeft:sel?.phone===c.phone?'2px solid var(--green)':'2px solid transparent'}}
+                  onMouseOver={e=>{if(sel?.phone!==c.phone)e.currentTarget.style.background='var(--bg4)'}}
+                  onMouseOut={e=>{if(sel?.phone!==c.phone)e.currentTarget.style.background='transparent'}}>
+                  <Avatar name={c.name||'?'}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:500}}>{c.name||'Unknown'}</div>
+                    <div style={{fontSize:11,color:'var(--text3)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:150}}>
+                      {c.messages?.length?c.messages[c.messages.length-1]?.text?.slice(0,35)+'...':c.phone}
+                    </div>
+                  </div>
+                  <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)',flexShrink:0}}>{c.messages?.length||0} msg</div>
+                </div>
+              ))
+            }
+          </div>
+          <div style={{display:'flex',flexDirection:'column'}}>
+            {sel?(
+              <>
+                <div style={{padding:'12px 18px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10,background:'var(--bg2)'}}>
+                  <Avatar name={sel.name||'?'}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:14,fontWeight:600}}>{sel.name||'Unknown'}</div>
+                    <div style={{fontSize:11,color:'var(--green)',fontFamily:'var(--mono)'}}>{sel.phone}</div>
+                  </div>
+                  <StatusPill status={sel.status}/>
+                </div>
+                <div style={{flex:1,overflowY:'auto',padding:16,display:'flex',flexDirection:'column',gap:10,background:'var(--bg)'}}>
+                  {(!sel.messages||sel.messages.length===0)?
+                    <Empty msg="No messages yet in this conversation"/>:
+                    sel.messages.map((m,i)=>(
+                      <div key={i} style={{maxWidth:'72%',padding:'10px 14px',borderRadius:12,fontSize:13,lineHeight:1.5,
+                        alignSelf:m.role==='sophie'?'flex-start':'flex-end',
+                        background:m.role==='sophie'?'var(--green)':'var(--bg2)',
+                        color:m.role==='sophie'?'#000':'var(--text)',
+                        border:m.role==='patient'?'1px solid var(--border)':'none',
+                        borderBottomLeftRadius:m.role==='sophie'?3:12,
+                        borderBottomRightRadius:m.role==='patient'?3:12}}>
+                        {m.text}
+                        <div style={{fontSize:10,opacity:0.6,marginTop:4,fontFamily:'var(--mono)'}}>{m.time}</div>
+                      </div>
+                    ))
+                  }
+                  <div ref={msgsEnd}/>
+                </div>
+                <div style={{padding:'12px 16px',borderTop:'1px solid var(--border)',display:'flex',gap:8,background:'var(--bg2)'}}>
+                  <input value={msg} onChange={e=>setMsg(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Send a message as Sophie..." style={{...inp,borderRadius:20,flex:1}}/>
+                  <button onClick={send} disabled={sending||!msg.trim()} style={{background:'var(--green)',color:'#000',border:'none',borderRadius:20,padding:'9px 18px',fontSize:13,fontWeight:600,cursor:'pointer',opacity:(sending||!msg.trim())?.5:1}}>
+                    {sending?'...':'Send'}
+                  </button>
+                </div>
+              </>
+            ):(
+              <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'var(--text3)',fontSize:13,gap:8}}>
+                <div style={{fontSize:32}}>💬</div>
+                <div>Select a conversation to view messages</div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -585,38 +662,36 @@ const Chat = ({showToast}) => {
 };
 
 // ── ANALYTICS ─────────────────────────────────────────────────────────────────
-const Analytics = () => {
-  const [data,setData] = useState(null);
+const Analytics = ()=>{
+  const [data,setData]=useState(null);
   useEffect(()=>{api.get('/api/analytics').then(setData);},[]);
-
-  const maxVal = data ? Math.max(...(data.daily||[]).map(d=>d.total),1) : 1;
-
-  return (
-    <div>
+  const maxV=data?Math.max(...(data.daily||[]).map(d=>d.total),1):1;
+  return(
+    <div style={{animation:'fadeIn .2s ease'}}>
       <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginBottom:18}}>
         {[
           {label:'Confirmation rate',val:data?data.confirmation_rate+'%':'—',color:'green',icon:'✅'},
           {label:'Total appointments',val:data?.total_appointments??'—',color:'blue',icon:'📅'},
-          {label:'Revenue protected',val:data?'$'+data.revenue_saved.toLocaleString():'—',color:'amber',icon:'💰'},
-          {label:'Total patients',val:'—',color:'purple',icon:'👥'},
+          {label:'Revenue protected',val:data?'$'+(data.revenue_saved||0).toLocaleString():'—',color:'amber',icon:'💰'},
+          {label:'Total confirmed',val:data?.total_confirmed??'—',color:'green',icon:'✓'},
         ].map(s=>(
-          <div key={s.label} style={S.statCard(s.color)}>
+          <div key={s.label} style={statCard(s.color)}>
             <div style={{fontSize:22,marginBottom:8}}>{s.icon}</div>
             <div style={{fontSize:26,fontWeight:700,fontFamily:'var(--mono)',color:'var(--text)',lineHeight:1,marginBottom:4}}>{s.val}</div>
             <div style={{fontSize:12,color:'var(--text2)'}}>{s.label}</div>
           </div>
         ))}
       </div>
-      <div style={S.card}>
-        <div style={S.cardHead}><div style={S.cardTitle}>Last 7 days</div><div style={S.cardSub}>Appointments, confirmed, no-shows</div></div>
+      <div style={card}>
+        <div style={cardHead}><div style={{fontSize:13,fontWeight:600}}>Last 7 days — real data from your sheet</div></div>
         <div style={{padding:24}}>
-          {!data ? <Spinner/> : (
+          {!data?<Spin/>:(
             <>
               <div style={{display:'grid',gridTemplateColumns:`repeat(${(data.daily||[]).length},1fr)`,gap:8,alignItems:'end',height:140,marginBottom:8}}>
                 {(data.daily||[]).map((d,i)=>(
                   <div key={i} style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'flex-end',height:'100%',gap:4}}>
                     <div style={{fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>{d.total}</div>
-                    <div style={{width:'100%',borderRadius:'4px 4px 0 0',background:d.confirmed>0?'var(--green)':'var(--bg4)',height:maxVal?Math.round(d.total/maxVal*100)+'%':'4px',minHeight:4,border:'1px solid var(--border)',transition:'height 0.3s ease'}}></div>
+                    <div title={`${d.confirmed} confirmed, ${d.noshows} no-shows`} style={{width:'100%',borderRadius:'4px 4px 0 0',background:d.total>0?'var(--green)':'var(--bg4)',height:maxV?Math.round(d.total/maxV*100)+'%':'4px',minHeight:4,border:'1px solid var(--border)',transition:'height .3s ease'}}/>
                   </div>
                 ))}
               </div>
@@ -624,14 +699,6 @@ const Analytics = () => {
                 {(data.daily||[]).map((d,i)=>(
                   <div key={i} style={{textAlign:'center',fontSize:10,color:'var(--text3)',fontFamily:'var(--mono)'}}>{d.date}</div>
                 ))}
-              </div>
-              <div style={{display:'flex',gap:16,marginTop:16}}>
-                <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'var(--text2)'}}>
-                  <div style={{width:10,height:10,borderRadius:2,background:'var(--green)'}}></div>Confirmed
-                </div>
-                <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11,color:'var(--text2)'}}>
-                  <div style={{width:10,height:10,borderRadius:2,background:'var(--bg4)'}}></div>No data
-                </div>
               </div>
             </>
           )}
@@ -642,135 +709,127 @@ const Analytics = () => {
 };
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
-const Settings = ({clinic,theme,setTheme,showToast}) => {
-  const [section,setSection] = useState('general');
-  const sections = ['General','Appearance','Sophie AI','Reminders','Clinic details'];
-
-  const Toggle = ({checked,onChange}) => (
-    <div onClick={()=>onChange(!checked)} style={{width:38,height:22,borderRadius:11,background:checked?'var(--green)':'var(--bg4)',cursor:'pointer',position:'relative',transition:'background 0.2s',flexShrink:0}}>
-      <div style={{position:'absolute',width:16,height:16,borderRadius:'50%',background:'white',top:3,left:checked?19:3,transition:'left 0.2s',boxShadow:'0 1px 3px rgba(0,0,0,0.3)'}}></div>
-    </div>
-  );
-
-  const SettingRow = ({label,desc,right}) => (
+const Settings = ({clinic,theme,setTheme,showToast})=>{
+  const [sec,setSec]=useState('general');
+  const Row=({label,desc,right})=>(
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 0',borderBottom:'1px solid var(--border)'}}>
-      <div><div style={{fontSize:13,fontWeight:500,color:'var(--text)'}}>{label}</div>{desc&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{desc}</div>}</div>
+      <div><div style={{fontSize:13,fontWeight:500}}>{label}</div>{desc&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{desc}</div>}</div>
       {right}
     </div>
   );
-
-  return (
-    <div style={{display:'grid',gridTemplateColumns:'200px 1fr',gap:20}}>
+  const sections=['general','appearance','sophie','reminders','clinic'];
+  return(
+    <div style={{display:'grid',gridTemplateColumns:'180px 1fr',gap:20,animation:'fadeIn .2s ease'}}>
       <div style={{display:'flex',flexDirection:'column',gap:2}}>
         {sections.map(s=>(
-          <div key={s} onClick={()=>setSection(s.toLowerCase().replace(' ',''))} style={{padding:'8px 12px',borderRadius:8,fontSize:13,color:section===s.toLowerCase().replace(' ','')?'var(--text)':'var(--text2)',background:section===s.toLowerCase().replace(' ','')?'var(--bg3)':'transparent',cursor:'pointer',fontWeight:section===s.toLowerCase().replace(' ','')?500:400,transition:'all 0.15s'}}>{s}</div>
+          <div key={s} onClick={()=>setSec(s)} style={{padding:'8px 12px',borderRadius:8,fontSize:13,color:sec===s?'var(--text)':'var(--text2)',background:sec===s?'var(--bg3)':'transparent',cursor:'pointer',fontWeight:sec===s?500:400,transition:'all .15s',textTransform:'capitalize'}}>
+            {s==='sophie'?'Sophie AI':s==='clinic'?'Clinic details':s.charAt(0).toUpperCase()+s.slice(1)}
+          </div>
         ))}
       </div>
-      <div style={S.card}>
-        <div style={{padding:20}}>
-          {section==='general' && <>
-            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>General settings</div>
-            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Manage your clinic preferences</div>
-            <SettingRow label="Auto-refresh" desc="Refresh appointment data every 60 seconds" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-            <SettingRow label="Email notifications" desc="Get emailed when a patient cancels" right={<Toggle checked={false} onChange={()=>{}}/>}/>
-            <SettingRow label="Sound alerts" desc="Play a sound when Sophie gets a reply" right={<Toggle checked={false} onChange={()=>{}}/>}/>
-          </>}
-          {section==='appearance' && <>
-            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Appearance</div>
-            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Customise how the dashboard looks</div>
-            <SettingRow label="Dark mode" desc="Use dark theme across the dashboard" right={<Toggle checked={theme==='dark'} onChange={v=>setTheme(v?'dark':'light')}/>}/>
-            <div style={{paddingTop:14}}>
-              <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>Accent colour</div>
-              <div style={{display:'flex',gap:8}}>
-                {['#00d97e','#4d9fff','#a78bfa','#f5a623','#ff4d6d','#06b6d4'].map(c=>(
-                  <div key={c} onClick={()=>{document.documentElement.style.setProperty('--green',c);showToast('Accent updated');}} style={{width:26,height:26,borderRadius:'50%',background:c,cursor:'pointer',border:'2px solid transparent',transition:'all 0.15s'}}
-                    onMouseOver={e=>e.currentTarget.style.transform='scale(1.15)'}
-                    onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}></div>
-                ))}
-              </div>
+      <div style={{...card,padding:20}}>
+        {sec==='general'&&<>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>General settings</div>
+          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Manage your clinic preferences</div>
+          <Row label="Auto-refresh" desc="Refresh appointment data every 60 seconds" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+          <Row label="Email notifications" desc="Get emailed when a patient cancels" right={<Toggle checked={false} onChange={()=>{}}/>}/>
+          <Row label="Sound alerts" desc="Play a sound when Sophie gets a reply" right={<Toggle checked={false} onChange={()=>{}}/>}/>
+        </>}
+        {sec==='appearance'&&<>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Appearance</div>
+          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Customise how the dashboard looks</div>
+          <Row label="Dark mode" desc="Use dark theme across the dashboard" right={<Toggle checked={theme==='dark'} onChange={v=>setTheme(v?'dark':'light')}/>}/>
+          <div style={{paddingTop:14}}>
+            <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>Accent colour</div>
+            <div style={{display:'flex',gap:8}}>
+              {['#00d97e','#4d9fff','#a78bfa','#f5a623','#ff4d6d','#06b6d4'].map(c=>(
+                <div key={c} onClick={()=>{document.documentElement.style.setProperty('--green',c);document.documentElement.style.setProperty('--green2',c);showToast('Accent updated');}} style={{width:26,height:26,borderRadius:'50%',background:c,cursor:'pointer',transition:'all .15s'}}
+                  onMouseOver={e=>e.currentTarget.style.transform='scale(1.15)'}
+                  onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}/>
+              ))}
             </div>
-          </>}
-          {section==='sophieai' && <>
-            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Sophie AI settings</div>
-            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Configure how Sophie communicates</div>
-            <SettingRow label="Auto-confirm on YES reply" desc="Automatically mark confirmed when patient replies YES" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-            <SettingRow label="Handle reschedule requests" desc="Sophie offers new slots when patient says NO" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-            <SettingRow label="Post-visit follow-up" desc="Sophie checks in 2 hours after appointment" right={<Toggle checked={false} onChange={()=>{}}/>}/>
-          </>}
-          {section==='reminders' && <>
-            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Reminder settings</div>
-            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Control when Sophie sends reminders</div>
-            <SettingRow label="24 hour reminder" desc="Send reminder day before appointment" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-            <SettingRow label="1 hour reminder" desc="Send reminder 1 hour before" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-            <SettingRow label="30 min follow-up" desc="Follow up if no reply to 24hr reminder" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-            <div style={{paddingTop:16}}>
-              <label style={{fontSize:11,fontWeight:600,color:'var(--text2)',display:'block',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>Daily reminder time</label>
-              <input type="time" defaultValue="14:00" style={{...S.input,width:160}}/>
-            </div>
-          </>}
-          {section==='clinicdetails' && <>
-            <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Clinic details</div>
-            <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Update information Sophie uses</div>
-            {[{l:'Clinic name',v:clinic?.name},{l:'Address',v:clinic?.address},{l:'Phone',v:clinic?.phone},{l:'Hours',v:clinic?.hours}].map(f=>(
-              <div key={f.l} style={{marginBottom:14}}>
-                <label style={{display:'block',fontSize:11,fontWeight:600,color:'var(--text2)',marginBottom:5,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>{f.l}</label>
-                <input defaultValue={f.v||''} style={S.input}/>
-              </div>
-            ))}
-            <button style={S.btn('primary')} onClick={()=>showToast('Clinic details saved!')}>Save changes</button>
-          </>}
-        </div>
+          </div>
+        </>}
+        {sec==='sophie'&&<>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Sophie AI settings</div>
+          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Configure how Sophie communicates</div>
+          <Row label="Send welcome message on booking" desc="New patients get a WhatsApp message when added" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+          <Row label="Auto-confirm on YES reply" desc="Status updates automatically when patient replies YES" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+          <Row label="Handle reschedule requests" desc="Sophie offers new slots when patient says NO" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+          <Row label="Post-visit follow-up" desc="Sophie checks in 2 hours after appointment" right={<Toggle checked={false} onChange={()=>{}}/>}/>
+        </>}
+        {sec==='reminders'&&<>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Reminder settings</div>
+          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Control when Sophie sends automatic reminders</div>
+          <Row label="24 hour reminder" desc="Send reminder day before appointment" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+          <Row label="1 hour reminder" desc="Send reminder 1 hour before" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+          <Row label="30 min follow-up" desc="Follow up if no reply to 24hr reminder" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+          <div style={{paddingTop:16}}>
+            <label style={{fontSize:11,fontWeight:600,color:'var(--text2)',display:'block',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>Daily reminder time</label>
+            <input type="time" defaultValue="14:00" style={{...inp,width:160}}/>
+          </div>
+        </>}
+        {sec==='clinic'&&<>
+          <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Clinic details</div>
+          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Information Sophie uses in conversations</div>
+          {[{l:'Clinic name',v:clinic?.name},{l:'Address',v:clinic?.address},{l:'Phone',v:clinic?.phone},{l:'Hours',v:clinic?.hours}].map(f=>(
+            <FG key={f.l} label={f.l}><input defaultValue={f.v||''} style={inp}/></FG>
+          ))}
+          <button style={btn('primary')} onClick={()=>showToast('Clinic details saved!')}>Save changes</button>
+        </>}
       </div>
     </div>
   );
 };
 
 // ── ADD PATIENT MODAL ─────────────────────────────────────────────────────────
-const AddPatientModal = ({open,onClose,onSuccess,clinic}) => {
-  const [form,setForm] = useState({name:'',phone:'',date:'',time:'',practitioner:'Dr. James Chen — Physiotherapy',notes:''});
-  const [err,setErr] = useState('');
-  const [saving,setSaving] = useState(false);
+const AddPatient = ({open,onClose,onSuccess,clinic})=>{
+  const [form,setForm]=useState({name:'',phone:'',date:'',time:'',practitioner:'',notes:''});
+  const [err,setErr]=useState('');
+  const [saving,setSaving]=useState(false);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
-
-  const save = async () => {
+  const save=async()=>{
     if(!form.name||!form.phone||!form.date||!form.time){setErr('Please fill in all required fields.');return;}
-    setSaving(true); setErr('');
-    const r = await api.post('/api/book',form);
+    if(!form.phone.startsWith('+')){setErr('Phone number must start with + and country code e.g. +61432997469');return;}
+    setSaving(true);setErr('');
+    const r=await api.post('/api/book',{...form,send_welcome:true});
     setSaving(false);
-    if(r.success){onSuccess(); onClose(); setForm({name:'',phone:'',date:'',time:'',practitioner:'Dr. James Chen — Physiotherapy',notes:''});}
+    if(r.success){onSuccess();onClose();setForm({name:'',phone:'',date:'',time:'',practitioner:'',notes:''});}
     else setErr(r.error||'Failed to save.');
   };
 
-  return (
-    <Modal open={open} onClose={onClose} title="Add new patient" subtitle="Patient will receive automatic WhatsApp reminders from Sophie">
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-        <FormGroup label="Patient name *"><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="James Smith" style={S.input}/></FormGroup>
-        <FormGroup label="WhatsApp number *"><input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="+61 4xx xxx xxx" style={S.input}/></FormGroup>
+  return(
+    <Modal open={open} onClose={onClose} title="Add new patient" subtitle="Sophie will automatically send them a WhatsApp welcome message">
+      <div style={{background:'var(--gb)',border:'1px solid var(--gbd)',borderRadius:'var(--r)',padding:'10px 14px',marginBottom:16,fontSize:12,color:'var(--green)'}}>
+        ✓ Sophie will automatically message this patient on WhatsApp when you save — confirming their appointment details.
       </div>
+      <FG label="Patient name *"><input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="James Smith" style={inp}/></FG>
+      <FG label="WhatsApp number * (must include country code)">
+        <input value={form.phone} onChange={e=>set('phone',e.target.value)} placeholder="+61432997469" style={inp}/>
+        <div style={{fontSize:11,color:'var(--text3)',marginTop:4}}>Patient must have previously texted "join tribe-smallest" to +1 415 523 8886 (Twilio trial limitation)</div>
+      </FG>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-        <FormGroup label="Date *"><input type="date" value={form.date} onChange={e=>set('date',e.target.value)} min={new Date().toISOString().split('T')[0]} style={S.input}/></FormGroup>
-        <FormGroup label="Time *">
-          <select value={form.time} onChange={e=>set('time',e.target.value)} style={S.input}>
+        <FG label="Date *"><input type="date" value={form.date} onChange={e=>set('date',e.target.value)} min={new Date().toISOString().split('T')[0]} style={inp}/></FG>
+        <FG label="Time *">
+          <select value={form.time} onChange={e=>set('time',e.target.value)} style={inp}>
             <option value="">Select time</option>
             <option>9:00 AM</option><option>11:00 AM</option><option>2:00 PM</option><option>4:00 PM</option>
           </select>
-        </FormGroup>
+        </FG>
       </div>
-      <FormGroup label="Practitioner">
-        <select value={form.practitioner} onChange={e=>set('practitioner',e.target.value)} style={S.input}>
-          {(clinic?.practitioners||['Dr. James Chen — Physiotherapy']).map(p=><option key={p}>{p}</option>)}
+      <FG label="Practitioner">
+        <select value={form.practitioner} onChange={e=>set('practitioner',e.target.value)} style={inp}>
+          {(clinic?.practitioners||[]).map(p=><option key={p}>{p}</option>)}
           <option>Any available</option>
         </select>
-      </FormGroup>
-      <FormGroup label="Notes">
-        <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder="Any relevant notes..." style={{...S.input,resize:'vertical',minHeight:64}}/>
-      </FormGroup>
-      {err && <div style={{color:'var(--red)',fontSize:12,marginBottom:8}}>{err}</div>}
+      </FG>
+      <FG label="Notes"><textarea value={form.notes} onChange={e=>set('notes',e.target.value)} placeholder="Any relevant notes..." style={{...inp,resize:'vertical',minHeight:60}}/></FG>
+      {err&&<div style={{color:'var(--red)',fontSize:12,marginBottom:8}}>{err}</div>}
       <div style={{display:'flex',gap:10}}>
-        <button style={{...S.btn(),flex:1,justifyContent:'center'}} onClick={onClose}>Cancel</button>
-        <button style={{...S.btn('primary'),flex:2,justifyContent:'center',opacity:saving?0.7:1}} onClick={save} disabled={saving}>
-          {saving?'Saving...':'Save appointment'}
+        <button style={{...btn(),flex:1,justifyContent:'center'}} onClick={onClose}>Cancel</button>
+        <button style={{...btn('primary'),flex:2,justifyContent:'center',opacity:saving?.6:1}} onClick={save} disabled={saving}>
+          {saving?'Saving & sending message...':'Save + send welcome message'}
         </button>
       </div>
     </Modal>
@@ -778,61 +837,47 @@ const AddPatientModal = ({open,onClose,onSuccess,clinic}) => {
 };
 
 // ── APP ───────────────────────────────────────────────────────────────────────
-const App = () => {
-  const [page,setPage] = useState('dashboard');
-  const [theme,setTheme] = useState('dark');
-  const [toast,setToast] = useState(null);
-  const [modalOpen,setModalOpen] = useState(false);
-  const [clinic,setClinic] = useState(null);
-  const [refreshKey,setRefreshKey] = useState(0);
+const App=()=>{
+  const [page,setPage]=useState('dashboard');
+  const [theme,setTheme]=useState('dark');
+  const [toast,setToast]=useState(null);
+  const [modalOpen,setModalOpen]=useState(false);
+  const [clinic,setClinic]=useState(null);
+  const [rk,setRk]=useState(0);
 
   useEffect(()=>{document.documentElement.setAttribute('data-theme',theme);},[theme]);
   useEffect(()=>{api.get('/api/clinic').then(setClinic);},[]);
 
-  const showToast = (msg,type='success') => {
-    setToast({msg,type});
-    setTimeout(()=>setToast(null),3500);
-  };
+  const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),4000);};
+  const pages={dashboard:'Overview',appointments:'Appointments',patients:'Patients',chat:'Live chat',analytics:'Analytics',settings:'Settings'};
 
-  const openModal = () => setModalOpen(true);
-  const onPatientAdded = () => { showToast('Patient added successfully!'); setRefreshKey(k=>k+1); };
-
-  const pages = {dashboard:'Overview',appointments:'Appointments',patients:'Patients',chat:'Live chat',analytics:'Analytics',settings:'Settings'};
-
-  return (
+  return(
     <>
-      <style>{`
-        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,217,126,0.4)}50%{box-shadow:0 0 0 6px rgba(0,217,126,0)}}
-        @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        button:hover{opacity:0.9}
-        *:focus{outline:none}
-      `}</style>
-      <Sidebar page={page} setPage={(p)=>{setPage(p);}} clinic={clinic}/>
-      <div style={S.main}>
-        <div style={S.topbar}>
+      <style>{`@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,217,126,0.4)}50%{box-shadow:0 0 0 6px rgba(0,217,126,0)}}button:focus{outline:none}input:focus,select:focus,textarea:focus{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(0,217,126,0.08)}`}</style>
+      <Sidebar page={page} setPage={setPage} clinic={clinic}/>
+      <div style={{marginLeft:'var(--sw)',minHeight:'100vh',display:'flex',flexDirection:'column'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 24px',borderBottom:'1px solid var(--border)',background:'var(--bg2)',position:'sticky',top:0,zIndex:50,flexWrap:'wrap',gap:10}}>
           <div>
             <div style={{fontSize:11,color:'var(--text3)',fontFamily:'var(--mono)'}}>clinic-os / {page}</div>
             <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>{pages[page]}</div>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <button style={S.iconBtn} onClick={()=>setTheme(t=>t==='dark'?'light':'dark')} title="Toggle theme">
-              {theme==='dark'?'☀️':'🌙'}
-            </button>
-            <button style={S.iconBtn} onClick={()=>setRefreshKey(k=>k+1)} title="Refresh">↻</button>
-            <button style={S.btn('primary')} onClick={openModal}>＋ Add patient</button>
+            <button onClick={()=>setTheme(t=>t==='dark'?'light':'dark')} style={{width:32,height:32,borderRadius:8,border:'1px solid var(--border)',background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:16}}>{theme==='dark'?'☀️':'🌙'}</button>
+            <button onClick={()=>setRk(k=>k+1)} style={{width:32,height:32,borderRadius:8,border:'1px solid var(--border)',background:'var(--bg3)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--text2)',fontSize:16}}>↻</button>
+            <button style={btn('primary')} onClick={()=>setModalOpen(true)}>＋ Add patient</button>
           </div>
         </div>
-        <div style={S.content}>
-          {page==='dashboard' && <Dashboard key={refreshKey} openModal={openModal} setPage={setPage} showToast={showToast}/>}
-          {page==='appointments' && <Appointments key={refreshKey} openModal={openModal} showToast={showToast}/>}
-          {page==='patients' && <Patients key={refreshKey} openModal={openModal}/>}
-          {page==='chat' && <Chat showToast={showToast}/>}
-          {page==='analytics' && <Analytics key={refreshKey}/>}
-          {page==='settings' && <Settings clinic={clinic} theme={theme} setTheme={setTheme} showToast={showToast}/>}
+        <div style={{padding:'22px 24px',flex:1}}>
+          {page==='dashboard'&&<Dashboard key={rk} openModal={()=>setModalOpen(true)} setPage={setPage} showToast={showToast}/>}
+          {page==='appointments'&&<Appointments key={rk} openModal={()=>setModalOpen(true)} showToast={showToast}/>}
+          {page==='patients'&&<Patients key={rk} openModal={()=>setModalOpen(true)} showToast={showToast}/>}
+          {page==='chat'&&<Chat showToast={showToast}/>}
+          {page==='analytics'&&<Analytics key={rk}/>}
+          {page==='settings'&&<Settings clinic={clinic} theme={theme} setTheme={setTheme} showToast={showToast}/>}
         </div>
       </div>
-      <AddPatientModal open={modalOpen} onClose={()=>setModalOpen(false)} onSuccess={onPatientAdded} clinic={clinic}/>
-      {toast && <Toast msg={toast.msg} type={toast.type}/>}
+      <AddPatient open={modalOpen} onClose={()=>setModalOpen(false)} onSuccess={()=>{showToast('Patient added! Welcome message sent via WhatsApp.');setRk(k=>k+1);}} clinic={clinic}/>
+      {toast&&<Toast msg={toast.msg} type={toast.type}/>}
     </>
   );
 };
