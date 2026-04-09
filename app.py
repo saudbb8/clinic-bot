@@ -46,7 +46,7 @@ SETTINGS = {
 
 # ── Clinic config ─────────────────────────────────────────────────────────────
 CLINICS = {
-    "+16625164516": {
+    "+1 575 586 8929": {
         "name": os.environ.get("CLINIC_NAME", "Melbourne Physio"),
         "address": "123 Collins Street, Melbourne VIC 3000",
         "phone": "(03) 9000 0000",
