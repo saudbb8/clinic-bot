@@ -711,18 +711,59 @@ const Analytics = ()=>{
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 const Settings = ({clinic,theme,setTheme,showToast})=>{
   const [sec,setSec]=useState('general');
-  const Row=({label,desc,right})=>(
+  const [settings,setSettings]=useState(null);
+  const [saving,setSaving]=useState(false);
+  const [clinicForm,setClinicForm]=useState({});
+
+  useEffect(()=>{
+    api.get('/api/settings').then(d=>{
+      setSettings(d);
+      setClinicForm({
+        clinic_name:d.clinic_name||'',
+        clinic_address:d.clinic_address||'',
+        clinic_phone:d.clinic_phone||'',
+        clinic_hours:d.clinic_hours||'',
+        sophie_name:d.sophie_name||'Sophie',
+      });
+    });
+  },[]);
+
+  const updateSetting = async(key,val)=>{
+    const updated={...settings,[key]:val};
+    setSettings(updated);
+    await api.post('/api/settings',{[key]:val});
+    if(key==='dark_mode')setTheme(val?'dark':'light');
+    if(key==='accent_color'){
+      document.documentElement.style.setProperty('--green',val);
+      document.documentElement.style.setProperty('--green2',val);
+    }
+    showToast('Setting saved');
+  };
+
+  const saveClinic = async()=>{
+    setSaving(true);
+    await api.post('/api/settings',clinicForm);
+    setSaving(false);
+    showToast('Clinic details saved!');
+  };
+
+  const Row=({label,desc,settingKey,right})=>(
     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 0',borderBottom:'1px solid var(--border)'}}>
       <div><div style={{fontSize:13,fontWeight:500}}>{label}</div>{desc&&<div style={{fontSize:11,color:'var(--text3)',marginTop:2}}>{desc}</div>}</div>
-      {right}
+      {right||( settingKey && settings &&
+        <Toggle checked={!!settings[settingKey]} onChange={v=>updateSetting(settingKey,v)}/>
+      )}
     </div>
   );
+
+  if(!settings)return <Spin/>;
+
   const sections=['general','appearance','sophie','reminders','clinic'];
   return(
     <div style={{display:'grid',gridTemplateColumns:'180px 1fr',gap:20,animation:'fadeIn .2s ease'}}>
       <div style={{display:'flex',flexDirection:'column',gap:2}}>
         {sections.map(s=>(
-          <div key={s} onClick={()=>setSec(s)} style={{padding:'8px 12px',borderRadius:8,fontSize:13,color:sec===s?'var(--text)':'var(--text2)',background:sec===s?'var(--bg3)':'transparent',cursor:'pointer',fontWeight:sec===s?500:400,transition:'all .15s',textTransform:'capitalize'}}>
+          <div key={s} onClick={()=>setSec(s)} style={{padding:'8px 12px',borderRadius:8,fontSize:13,color:sec===s?'var(--text)':'var(--text2)',background:sec===s?'var(--bg3)':'transparent',cursor:'pointer',fontWeight:sec===s?500:400,transition:'all .15s'}}>
             {s==='sophie'?'Sophie AI':s==='clinic'?'Clinic details':s.charAt(0).toUpperCase()+s.slice(1)}
           </div>
         ))}
@@ -731,19 +772,20 @@ const Settings = ({clinic,theme,setTheme,showToast})=>{
         {sec==='general'&&<>
           <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>General settings</div>
           <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Manage your clinic preferences</div>
-          <Row label="Auto-refresh" desc="Refresh appointment data every 60 seconds" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-          <Row label="Email notifications" desc="Get emailed when a patient cancels" right={<Toggle checked={false} onChange={()=>{}}/>}/>
-          <Row label="Sound alerts" desc="Play a sound when Sophie gets a reply" right={<Toggle checked={false} onChange={()=>{}}/>}/>
+          <Row label="Auto-refresh" desc="Refresh appointment data every 60 seconds" settingKey="auto_refresh"/>
+          <Row label="Email notifications" desc="Get emailed when a patient cancels" settingKey="email_notifications"/>
+          <Row label="Sound alerts" desc="Play a sound when Sophie gets a reply" settingKey="sound_alerts"/>
         </>}
         {sec==='appearance'&&<>
           <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Appearance</div>
           <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Customise how the dashboard looks</div>
-          <Row label="Dark mode" desc="Use dark theme across the dashboard" right={<Toggle checked={theme==='dark'} onChange={v=>setTheme(v?'dark':'light')}/>}/>
+          <Row label="Dark mode" desc="Use dark theme across the dashboard" right={<Toggle checked={theme==='dark'} onChange={v=>{setTheme(v?'dark':'light');updateSetting('dark_mode',v);}}/>}/>
           <div style={{paddingTop:14}}>
             <div style={{fontSize:13,fontWeight:500,marginBottom:10}}>Accent colour</div>
             <div style={{display:'flex',gap:8}}>
               {['#00d97e','#4d9fff','#a78bfa','#f5a623','#ff4d6d','#06b6d4'].map(c=>(
-                <div key={c} onClick={()=>{document.documentElement.style.setProperty('--green',c);document.documentElement.style.setProperty('--green2',c);showToast('Accent updated');}} style={{width:26,height:26,borderRadius:'50%',background:c,cursor:'pointer',transition:'all .15s'}}
+                <div key={c} onClick={()=>updateSetting('accent_color',c)}
+                  style={{width:26,height:26,borderRadius:'50%',background:c,cursor:'pointer',transition:'all .15s',border:settings.accent_color===c?'2px solid white':'2px solid transparent'}}
                   onMouseOver={e=>e.currentTarget.style.transform='scale(1.15)'}
                   onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}/>
               ))}
@@ -752,30 +794,52 @@ const Settings = ({clinic,theme,setTheme,showToast})=>{
         </>}
         {sec==='sophie'&&<>
           <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Sophie AI settings</div>
-          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Configure how Sophie communicates</div>
-          <Row label="Send welcome message on booking" desc="New patients get a WhatsApp message when added" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-          <Row label="Auto-confirm on YES reply" desc="Status updates automatically when patient replies YES" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-          <Row label="Handle reschedule requests" desc="Sophie offers new slots when patient says NO" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-          <Row label="Post-visit follow-up" desc="Sophie checks in 2 hours after appointment" right={<Toggle checked={false} onChange={()=>{}}/>}/>
+          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Configure how Sophie communicates with patients</div>
+          <Row label="Send welcome message on booking" desc="New patients get an instant WhatsApp confirmation when added" settingKey="welcome_message"/>
+          <Row label="Auto-confirm on YES reply" desc="Status updates automatically when patient replies YES" settingKey="auto_confirm"/>
+          <Row label="Handle reschedule requests" desc="Sophie offers new time slots when patient says NO" settingKey="handle_reschedule"/>
+          <Row label="Post-visit follow-up" desc="Sophie checks in 2 hours after the appointment" settingKey="post_visit_followup"/>
+          <div style={{paddingTop:16}}>
+            <label style={{fontSize:11,fontWeight:600,color:'var(--text2)',display:'block',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>Sophie's name</label>
+            <div style={{display:'flex',gap:8}}>
+              <input defaultValue={settings.sophie_name||'Sophie'} style={{...inp,flex:1}} id="sophie-name-input"/>
+              <button style={btn('primary')} onClick={()=>updateSetting('sophie_name',document.getElementById('sophie-name-input').value)}>Save</button>
+            </div>
+          </div>
         </>}
         {sec==='reminders'&&<>
           <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Reminder settings</div>
-          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Control when Sophie sends automatic reminders</div>
-          <Row label="24 hour reminder" desc="Send reminder day before appointment" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-          <Row label="1 hour reminder" desc="Send reminder 1 hour before" right={<Toggle checked={true} onChange={()=>{}}/>}/>
-          <Row label="30 min follow-up" desc="Follow up if no reply to 24hr reminder" right={<Toggle checked={true} onChange={()=>{}}/>}/>
+          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Control when Sophie sends automatic reminders — all run in the background 24/7</div>
+          <div style={{background:'var(--gb)',border:'1px solid var(--gbd)',borderRadius:'var(--r)',padding:'10px 14px',marginBottom:16,fontSize:12,color:'var(--green)'}}>
+            ✓ Reminders run automatically in the background every 30 minutes. No action needed.
+          </div>
+          <Row label="24 hour reminder" desc="Sophie messages patient the day before their appointment" settingKey="reminder_24hr"/>
+          <Row label="1 hour reminder" desc="Sophie messages patient 1 hour before appointment" settingKey="reminder_1hr"/>
+          <Row label="30 min follow-up" desc="Follow up if patient didn't reply to 24hr reminder" settingKey="reminder_30min"/>
           <div style={{paddingTop:16}}>
             <label style={{fontSize:11,fontWeight:600,color:'var(--text2)',display:'block',marginBottom:6,textTransform:'uppercase',letterSpacing:'0.05em',fontFamily:'var(--mono)'}}>Daily reminder time</label>
-            <input type="time" defaultValue="14:00" style={{...inp,width:160}}/>
+            <div style={{display:'flex',gap:8}}>
+              <input type="time" defaultValue={settings.reminder_time||'14:00'} style={{...inp,width:160}} id="reminder-time-input"/>
+              <button style={btn('primary')} onClick={()=>updateSetting('reminder_time',document.getElementById('reminder-time-input').value)}>Save</button>
+            </div>
           </div>
         </>}
         {sec==='clinic'&&<>
           <div style={{fontSize:15,fontWeight:600,marginBottom:4}}>Clinic details</div>
-          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Information Sophie uses in conversations</div>
-          {[{l:'Clinic name',v:clinic?.name},{l:'Address',v:clinic?.address},{l:'Phone',v:clinic?.phone},{l:'Hours',v:clinic?.hours}].map(f=>(
-            <FG key={f.l} label={f.l}><input defaultValue={f.v||''} style={inp}/></FG>
+          <div style={{fontSize:12,color:'var(--text3)',marginBottom:20}}>Sophie uses this information in all conversations with patients</div>
+          {[
+            {l:'Clinic name',k:'clinic_name',ph:'Melbourne Physio'},
+            {l:'Address',k:'clinic_address',ph:'123 Collins St, Melbourne'},
+            {l:'Phone',k:'clinic_phone',ph:'(03) 9000 0000'},
+            {l:'Opening hours',k:'clinic_hours',ph:'Monday to Friday, 8am to 6pm'},
+          ].map(f=>(
+            <FG key={f.l} label={f.l}>
+              <input value={clinicForm[f.k]||''} onChange={e=>setClinicForm(prev=>({...prev,[f.k]:e.target.value}))} placeholder={f.ph} style={inp}/>
+            </FG>
           ))}
-          <button style={btn('primary')} onClick={()=>showToast('Clinic details saved!')}>Save changes</button>
+          <button style={{...btn('primary'),opacity:saving?.6:1}} onClick={saveClinic} disabled={saving}>
+            {saving?'Saving...':'Save clinic details'}
+          </button>
         </>}
       </div>
     </div>
